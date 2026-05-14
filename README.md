@@ -39,6 +39,8 @@ Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. Th
 | `app/Observers/`                  | Observer rules                                            |
 | `app/Events/`                     | Event + listener rules                                    |
 | `app/Jobs/`                       | Queue job rules                                           |
+| `app/Livewire/`                   | Livewire auto-save, morphing, component aliasing          |
+| `app/Notifications/`              | Notification naming + Laravel 12+ listener auto-discovery |
 | `app/Console/Commands/`           | Artisan command rules                                     |
 | `config/`                         | `env()` / `config()` rules                                |
 | `routes/`                         | Routing + route naming                                    |
