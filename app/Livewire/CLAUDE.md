@@ -1,5 +1,64 @@
 # Livewire
 
+## `wire:model` modifiers
+
+- **MUST** default to `wire:model.defer` for form fields — batches updates until submit. Plain `wire:model` sends a network roundtrip on every keystroke.
+- **SHOULD** use `wire:model.debounce.300ms` for search/filter inputs that should react live without flooding the server.
+- **SHOULD** use `wire:model.lazy` when you want a single roundtrip on blur.
+
+## Authorization
+
+- **MUST** call `$this->authorize(...)` in `mount()` AND inside every action method that mutates state. A `mount()`-only check is bypassable — the component is alive in the browser and any public method is callable directly.
+
+```php
+public function mount(Post $post): void
+{
+    $this->authorize('update', $post);
+    $this->post = $post;
+}
+
+public function publish(): void
+{
+    $this->authorize('publish', $this->post);
+    // ...
+}
+```
+
+## URL state with `$queryString`
+
+Sync component state to the URL for filter/search/sort UIs so refresh and back/forward preserve state:
+
+```php
+public array $queryString = [
+    'search' => ['except' => ''],
+    'status' => ['except' => 'all'],
+    'page'   => ['except' => 1],
+];
+
+public function updatingSearch(): void
+{
+    $this->resetPage();
+}
+```
+
+- **MUST** reset pagination when a filter changes via `updating{Property}()` — otherwise stale `page=N` runs against a smaller filtered set and returns an empty page.
+
+## Computed properties
+
+Use `#[Computed]` for derived values accessed many times per render — Livewire memoizes the result for the lifetime of the render pass:
+
+```php
+use Livewire\Attributes\Computed;
+
+#[Computed]
+public function unreadCount(): int
+{
+    return $this->user->notifications()->whereNull('read_at')->count();
+}
+```
+
+Read in Blade as `{{ $this->unreadCount }}`. Without `#[Computed]`, the method runs once per access — death-by-N-queries.
+
 ## Auto-save patterns
 
 - `updated()` fires on every field change — add server-side throttling (timestamp comparison) to prevent write storms during fast typing.

@@ -86,6 +86,65 @@ function mockPayments(): object
 }
 ```
 
+## Datasets — parameterized tests
+
+For boundary/validation tests that vary only by inputs, **SHOULD** use a Pest dataset rather than copy-pasting near-identical tests:
+
+```php
+it('rejects invalid emails', function (string $email) {
+    expect(fn () => User::factory()->create(['email' => $email]))
+        ->toThrow(ValidationException::class);
+})->with([
+    'empty'       => '',
+    'no at sign'  => 'not-an-email',
+    'no tld'      => 'user@example',
+    'spaces'      => 'a b@c.com',
+]);
+```
+
+## Useful assertions
+
+- **`assertSoftDeleted('posts', ['id' => $post->id])`** — verify a soft delete happened.
+- **`$this->assertModelExists($post)` / `$this->assertModelMissing($post)`** — model-aware existence checks; clearer failures than `assertDatabaseHas`.
+- **`assertJsonStructure([...])`** — pin response shape, including pagination envelope:
+
+```php
+$response->assertJsonStructure([
+    'success',
+    'data' => ['*' => ['id', 'title']],
+    'meta' => ['page', 'per_page', 'total'],
+]);
+```
+
+## Auth — Sanctum + abilities
+
+When testing token-scoped endpoints, **MUST** test both granted and missing abilities:
+
+```php
+use Laravel\Sanctum\Sanctum;
+
+Sanctum::actingAs($user, ['posts:write']);
+$this->postJson('/api/posts', $payload)->assertCreated();
+
+Sanctum::actingAs($user, []); // no abilities
+$this->postJson('/api/posts', $payload)->assertForbidden();
+```
+
+## Selective fakes
+
+Prefer allowlisted fakes over blanket fakes so unrelated listeners stay live:
+
+```php
+Event::fake([OrderShipped::class]);
+Notification::fake();
+Storage::fake('s3');
+
+// ...
+
+Notification::assertSentTo($user, OrderShipped::class);
+Storage::disk('s3')->assertExists("invoices/{$order->id}.pdf");
+```
+
 ## Mocking
 
 Mock external boundaries (HTTP, mail, queue, filesystem, third-party SDKs). **AVOID** mocking your own application classes — refactor instead.

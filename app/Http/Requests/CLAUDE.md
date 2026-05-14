@@ -19,6 +19,32 @@
 php artisan make:request StoreUserRequest
 ```
 
+## `prepareForValidation()` — normalize input
+
+Use to normalize or derive fields **before** rules run. Common cases: trim whitespace, lowercase emails, derive `slug` from `title`, coerce string booleans:
+
+```php
+protected function prepareForValidation(): void
+{
+    $this->merge([
+        'slug' => Str::slug($this->input('title', '')),
+    ]);
+}
+```
+
+## Update requests — `Rule::unique()->ignore()`
+
+When validating uniqueness on update, **MUST** exempt the current row or every update fails:
+
+```php
+public function rules(): array
+{
+    return [
+        'slug' => ['required', 'string', Rule::unique('posts', 'slug')->ignore($this->route('post'))],
+    ];
+}
+```
+
 ## Example with `toDto()`
 
 ```php

@@ -66,6 +66,31 @@ Route::middleware('auth:sanctum')->prefix('conversations')->group(function () {
 });
 ```
 
+## API versioning
+
+Version public APIs via a prefix + namespace group. Per-version controllers live under `App\Http\Controllers\Api\V{N}\`:
+
+```php
+Route::prefix('v1')
+    ->name('v1.')
+    ->namespace('App\Http\Controllers\Api\V1')
+    ->middleware(['api', 'auth:sanctum', 'throttle:60,1'])
+    ->group(base_path('routes/api/v1.php'));
+```
+
+- **MUST** version any externally-consumed API. Breaking changes ship as `v2`, never as silent edits to `v1`.
+- **SHOULD** keep per-version route files under `routes/api/v{N}.php` rather than one giant `routes/api.php`.
+
+## Rate limiting
+
+- **MUST** apply `throttle:{max},{minutes}` middleware (or a named limiter) to every public, unauthenticated, or expensive endpoint.
+
+```php
+Route::middleware('throttle:5,1')->post('/login', LoginController::class);
+```
+
+For complex limiters, define them in `App\Providers\RouteServiceProvider::configureRateLimiting()` and reference by name (`throttle:api`).
+
 ## Custom parameter → model binding
 
 To resolve `{conversation}` to a class with a different name, register an explicit binding:

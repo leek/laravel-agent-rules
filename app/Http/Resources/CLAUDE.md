@@ -31,6 +31,39 @@ Use a consistent envelope across all API responses:
 php artisan make:resource UserResource
 ```
 
+## Conditional fields
+
+Use the `when*` helpers to keep payloads lean and avoid leaking relations that weren't loaded:
+
+- **`$this->whenLoaded('relation')`** — include a relation only when the controller eager-loaded it. Prevents accidental N+1 from the resource layer.
+- **`$this->when($condition, $value)`** — include a field only when a condition holds (e.g. show `email` only to the user themself or an admin; show heavy `content` on `show` but not `index`).
+- **`$this->whenPivotLoaded('table', fn () => $this->pivot->role)`** — include pivot data only when the pivot row is hydrated.
+
+```php
+return [
+    'id'       => $this->id,
+    'title'    => $this->title,
+    'content'  => $this->when($request->routeIs('*.show'), $this->content),
+    'email'    => $this->when($request->user()?->can('view-email', $this->resource), $this->email),
+    'author'   => UserResource::make($this->whenLoaded('author')),
+    'comments' => CommentResource::collection($this->whenLoaded('comments')),
+    'role'     => $this->whenPivotLoaded('team_user', fn () => $this->pivot->role),
+];
+```
+
+## Global response meta — `with()`
+
+Inject fields into every response from a resource (API version, server time, deprecation notice) via `with(Request $request)`:
+
+```php
+public function with(Request $request): array
+{
+    return [
+        'api_version' => '2024-05',
+    ];
+}
+```
+
 ## Example
 
 ```php

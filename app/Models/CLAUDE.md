@@ -147,6 +147,46 @@ DB::transaction(function (): void {
 });
 ```
 
+For read-modify-write contention (counter increments, balance updates, claim-a-row patterns), use `lockForUpdate()` **inside** a transaction:
+
+```php
+DB::transaction(function () use ($accountId, $amount): void {
+    $account = Account::query()->lockForUpdate()->findOrFail($accountId);
+    $account->balance -= $amount;
+    $account->save();
+});
+```
+
+## Large datasets — `chunk()` / `lazy()`
+
+- **MUST NOT** load large tables fully into memory with `all()` or `get()`.
+- **SHOULD** use `chunkById()` for paged iteration (stable cursor; safe under concurrent inserts).
+- **SHOULD** use `lazy()` for streaming a `LazyCollection` when you want collection ergonomics without holding the full result set.
+
+```php
+Order::query()->chunkById(500, function (Collection $orders) {
+    $orders->each(fn (Order $order) => $order->recompute());
+});
+
+Order::query()->lazy()->each(fn (Order $order) => $order->recompute());
+```
+
+## Bulk writes — `upsert()`
+
+For mass insert-or-update, **MUST** use `upsert()` instead of looping `firstOrCreate` / `updateOrCreate`:
+
+```php
+Product::query()->upsert(
+    $rows,                       // array of associative arrays
+    uniqueBy: ['sku'],
+    update:   ['price', 'name'],
+);
+```
+
+## Model events — keep them light
+
+- **MUST NOT** do heavy work in `creating`/`updating`/`saved` (HTTP calls, file IO, large recomputations). Dispatch a queued Job instead — observer callbacks block the write path and can balloon request latency.
+
 ## Soft deletes
 
 - Use `SoftDeletes` for records that must be recoverable (orders, invoices, user-generated content).
