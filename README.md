@@ -29,7 +29,7 @@ Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. Th
 
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
-| `CLAUDE.md`                       | Cross-cutting code naming + class-type → directory index  |
+| `app/CLAUDE.md`                   | Cross-cutting code naming + class-type → directory index  |
 | `app/Models/`                     | Model rules                                               |
 | `app/Http/Controllers/`           | Controller rules + audience namespacing                   |
 | `app/Http/Requests/`              | Form Request rules                                        |
