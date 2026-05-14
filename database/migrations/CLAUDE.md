@@ -17,6 +17,7 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 
 ## When writing a migration
 
+- **MUST** declare migrations as **anonymous classes** (`return new class extends Migration { ... };`). Filename communicates intent; no named class needed.
 - **MUST** preserve column sorting. When adding a new column, use `after('existing_column')` or `before('existing_column')`.
 - **SHOULD** add `comment('...')` to any column whose name is not self-explanatory (legal/finance/regulatory terms, codes, project-specific jargon).
 - **SHOULD** declare an explicit `onDelete` policy on every foreign key (`cascade`, `restrict`, `set null`).
@@ -33,13 +34,49 @@ php artisan make:migration create_products_table
 php artisan make:migration add_published_at_to_products_table
 ```
 
-## Example
+## Example — add column
 
 ```php
-Schema::table('products', function (Blueprint $table) {
-    $table->timestamp('published_at')
-        ->nullable()
-        ->after('status')
-        ->comment('Time the product became publicly visible.');
-});
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('products', function (Blueprint $table): void {
+            $table->timestamp('published_at')
+                ->nullable()
+                ->after('status')
+                ->comment('Time the product became publicly visible.');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table): void {
+            $table->dropColumn('published_at');
+        });
+    }
+};
+```
+
+## Example — create table
+
+```php
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('orders', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->string('status', 32)->index();
+            $table->unsignedInteger('total_cents');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('orders');
+    }
+};
 ```

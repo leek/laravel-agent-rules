@@ -30,9 +30,10 @@ Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. Th
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
 | `app/CLAUDE.md`                   | Cross-cutting code naming + class-type → directory index  |
-| `app/Models/`                     | Model rules                                               |
+| `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Http/Controllers/`           | Controller rules + audience namespacing                   |
-| `app/Http/Requests/`              | Form Request rules                                        |
+| `app/Http/Requests/`              | Form Request rules + `toDto()` pattern                    |
+| `app/Http/Resources/`             | API Resource pattern + paginated envelope                 |
 | `app/Http/Middleware/`            | Middleware rules                                          |
 | `app/Actions/`                    | Action rules (default home for business logic)            |
 | `app/Support/`                    | Support class rules                                       |
@@ -42,6 +43,7 @@ Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. Th
 | `app/Livewire/`                   | Livewire auto-save, morphing, component aliasing          |
 | `app/Notifications/`              | Notification naming + Laravel 12+ listener auto-discovery |
 | `app/Console/Commands/`           | Artisan command rules                                     |
+| `app/Providers/`                  | Container bindings (interface → implementation)           |
 | `config/`                         | `env()` / `config()` rules                                |
 | `routes/`                         | Routing + route naming                                    |
 | `database/`                       | Schema, keys, indexes, table/column naming                |

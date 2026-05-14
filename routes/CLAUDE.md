@@ -21,6 +21,8 @@
 - **MUST** group routes by entity, then nest middleware/prefix groups outside the entity group.
 - **SHOULD** prefer resource routes for CRUD: `Route::resource('users', UserController::class)`.
 - **SHOULD** use route-model binding (`/users/{user}`) over manual lookups.
+- **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship and prevents cross-tenant access.
+- **MUST** use a single parameter name that matches the bound model (`{conversation}` resolves to `Conversation`). Reusing a different name silently resolves to `null`.
 
 ## Example
 
@@ -44,5 +46,34 @@ Route::prefix('/admin')
         Route::resource('orders', OrderController::class);
     });
 ```
+
+## Scoped nested routes
+
+```php
+Route::middleware('auth:sanctum')->prefix('conversations')->group(function () {
+    Route::post('/', [ConversationController::class, 'store'])->name('conversations.store');
+
+    Route::scopeBindings()->group(function () {
+        Route::get('/{conversation}', [ConversationController::class, 'show'])
+            ->name('conversations.show');
+
+        Route::post('/{conversation}/messages', [MessageController::class, 'store'])
+            ->name('conversation-messages.store');
+
+        Route::get('/{conversation}/messages/{message}', [MessageController::class, 'show'])
+            ->name('conversation-messages.show');
+    });
+});
+```
+
+## Custom parameter → model binding
+
+To resolve `{conversation}` to a class with a different name, register an explicit binding:
+
+```php
+Route::model('conversation', AiConversation::class);
+```
+
+For non-trivial resolution logic, use `Route::bind()` or override `resolveRouteBinding()` on the model.
 
 > Middleware rules live in `app/Http/Middleware/CLAUDE.md`.
