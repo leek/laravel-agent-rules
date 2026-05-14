@@ -23,7 +23,34 @@ npx apply-agent-rules apply leek/laravel-agent-rules@v0.1.0 --agents claude
 npx apply-agent-rules update
 ```
 
-Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. The single canonical `CLAUDE.md` in this repo is rendered to each selected agent's expected filename (`AGENTS.md`, `GEMINI.md`, `.cursorrules`, …) in the same directory.
+Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`.
+
+## How install works
+
+Every `CLAUDE.md` in this repo is the canonical source. The installer walks the tree and, for each `CLAUDE.md` it finds, writes one file per selected agent into the **same directory** under that agent's expected filename:
+
+| Agent     | Filename written          |
+| --------- | ------------------------- |
+| `claude`  | `CLAUDE.md`               |
+| `codex`   | `AGENTS.md`               |
+| `gemini`  | `GEMINI.md`               |
+| `cursor`  | `.cursor/rules/*.mdc`     |
+| `windsurf`| `.windsurfrules`          |
+| `cline`   | `.clinerules`             |
+
+So picking `--agents claude,codex` against this repo produces, for example:
+
+```
+app/Models/CLAUDE.md      ← Claude reads this
+app/Models/AGENTS.md      ← Codex reads this
+app/Http/Controllers/CLAUDE.md
+app/Http/Controllers/AGENTS.md
+database/migrations/CLAUDE.md
+database/migrations/AGENTS.md
+...
+```
+
+Each agent picks up the rules colocated with the file it's editing — no central rules file, no manual wiring. Subdirectory rules ship as separate files in their own subdirectories, not concatenated into the root.
 
 ## What you get
 
