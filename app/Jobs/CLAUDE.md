@@ -89,6 +89,87 @@ Bus::batch([
 ->dispatch();
 ```
 
+## Conditional dispatch
+
+```php
+ProcessOrderJob::dispatchIf($order->isPaid(), $order);
+ProcessOrderJob::dispatchUnless($order->isCancelled(), $order);
+```
+
+## Time-bounded retries — `retryUntil()`
+
+Instead of a fixed `$tries`, expire retries at a wall-clock deadline:
+
+```php
+public function retryUntil(): DateTime
+{
+    return now()->addHours(2);
+}
+```
+
+## Short-circuiting — `$this->fail()`
+
+For unrecoverable errors (validation failure, missing prerequisite), call `$this->fail('msg')` to stop further retries without throwing:
+
+```php
+public function handle(): void
+{
+    if (! $this->order->paymentMethod) {
+        $this->fail('Order has no payment method — manual intervention required.');
+        return;
+    }
+    // ...
+}
+```
+
+## Repeated-exception backoff — `ThrottlesExceptions`
+
+When the same error keeps recurring (a downstream service flapping), back off retries instead of hammering:
+
+```php
+public function middleware(): array
+{
+    // After 3 exceptions, sleep 5 minutes before retrying
+    return [new ThrottlesExceptions(3, 5)];
+}
+```
+
+## Idempotency — atomic claim pattern
+
+For "exactly-once" side effects against a row, **MUST** use an atomic conditional update and check the affected count rather than read-then-write:
+
+```php
+$affected = Order::query()
+    ->whereKey($this->order->id)
+    ->whereNull('paid_at')
+    ->update(['paid_at' => now(), 'payment_id' => $this->paymentId]);
+
+if ($affected === 0) {
+    // Another worker won the race — already processed.
+    return;
+}
+```
+
+## Batching
+
+- **MUST** add the `Illuminate\Bus\Batchable` trait to jobs intended to run inside `Bus::batch([...])`.
+- Inside the job, guard with `if ($this->batch()?->cancelled()) return;` to bail out cleanly when the batch is cancelled.
+
+```php
+final class ImportRowJob implements ShouldQueue
+{
+    use Batchable, Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
+
+    public function handle(): void
+    {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+        // ...
+    }
+}
+```
+
 ## Queue selection
 
 Reserve named queues for priority bands; dispatch with `->onQueue('high')`:

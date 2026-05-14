@@ -32,6 +32,62 @@ protected function prepareForValidation(): void
 }
 ```
 
+## Conditional and dynamic rules
+
+- **`Rule::when($condition, ['required', 'string'])`** — apply a rule chain only when a condition holds.
+- **`'sometimes'`** — apply remaining rules only if the field is present.
+- **`'bail'`** as the first rule — stop on first failure (avoid expensive checks running after a cheap one already failed).
+- **`'required_if:type,company'`** / **`'exclude_if:type,individual'`** / **`'prohibited_if'`** — keep conditional dependencies in the rule definition, not in PHP `if`s.
+
+```php
+'tax_id' => ['required_if:type,company', 'nullable', 'string'],
+'email'  => ['bail', 'required', 'email:rfc,dns'],
+```
+
+## Enums — `Rule::enum`
+
+```php
+'status' => ['required', Rule::enum(Status::class)->only([Status::Active, Status::Pending])],
+```
+
+## Cross-field validation — `after(): array`
+
+For business rules that need every standard rule to have passed first (and access to the validator), return closures from `after()`:
+
+```php
+public function after(): array
+{
+    return [
+        function (Validator $validator): void {
+            if ($this->date('start_at')->gte($this->date('end_at'))) {
+                $validator->errors()->add('end_at', 'End must be after start.');
+            }
+        },
+    ];
+}
+```
+
+## Custom messages with array `:position`
+
+```php
+public function messages(): array
+{
+    return [
+        'items.*.product_id.exists' => 'Product #:position does not exist.',
+        'items.*.quantity.min'      => 'Item #:position must have at least :min unit(s).',
+    ];
+}
+```
+
+## Safe input — `$request->safe()`
+
+After validation, **PREFER** `$request->safe()->only([...])` / `->except([...])` / `->merge([...])` over `$request->validated()` when filtering or adding trusted server-side fields:
+
+```php
+$attributes = $request->safe()->except(['confirm_password']);
+$attributes = $request->safe()->merge(['created_by_id' => $request->user()->id]);
+```
+
 ## Update requests — `Rule::unique()->ignore()`
 
 When validating uniqueness on update, **MUST** exempt the current row or every update fails:

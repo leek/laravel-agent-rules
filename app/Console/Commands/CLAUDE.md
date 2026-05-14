@@ -38,11 +38,4 @@ class FetchUsersCommand extends Command
 
 ## Scheduling
 
-Wire scheduled commands in `app/Console/Kernel.php`:
-
-```php
-protected function schedule(Schedule $schedule): void
-{
-    $schedule->command('telescope:prune')->daily();
-}
-```
+Scheduling rules live in `routes/CLAUDE.md` — see the "Task scheduling" section. In Laravel 11+, schedules are defined in `routes/console.php` via the `Schedule` facade, not in `app/Console/Kernel.php` (which no longer exists in fresh L11+ skeletons).

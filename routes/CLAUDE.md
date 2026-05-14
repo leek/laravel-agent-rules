@@ -101,4 +101,35 @@ Route::model('conversation', AiConversation::class);
 
 For non-trivial resolution logic, use `Route::bind()` or override `resolveRouteBinding()` on the model.
 
+## Task scheduling (`routes/console.php`)
+
+In Laravel 11+, scheduled tasks live in `routes/console.php` using the `Schedule` facade — **NOT** in `app/Console/Kernel.php` (which is removed from the L11+ skeleton).
+
+```php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('telescope:prune')->daily();
+Schedule::command('app:fetch-users')->everyFiveMinutes();
+Schedule::call(fn () => Account::recompute())->hourly()->description('Recompute account balances');
+```
+
+Hard rules:
+
+- **MUST** call `->withoutOverlapping()` on any task whose runtime may exceed its interval. Default lock holds 24h — pass `expiresAt: $minutes` to recover faster after a crashed worker.
+- **MUST** call `->onOneServer()` in multi-server deployments. Requires a `redis`, `memcached`, or `database` cache driver.
+- **SHOULD** chain monitoring hooks: `->before(fn)`, `->after(fn)`, `->onSuccess(fn)`, `->onFailure(fn)`.
+- **SHOULD** integrate with a healthcheck service via `->pingOnSuccess('https://...')` / `->pingOnFailure('https://...')`.
+- **SHOULD** scope env-specific tasks with `->environments(['production'])`.
+- **SHOULD** call `->description('...')` on closure schedules so `php artisan schedule:list` is readable.
+- **SHOULD** pin a `->timezone('America/New_York')` on time-sensitive tasks; defaults to the app timezone.
+- **`->evenInMaintenanceMode()`** — for must-run-always tasks (billing, queue health pings).
+
+Sub-minute frequencies (L11+): `everySecond()`, `everyTwoSeconds()`, `everyFiveSeconds()`, `everyTenSeconds()`, `everyThirtySeconds()`.
+
+Dry-run a single task:
+
+```bash
+php artisan schedule:test
+```
+
 > Middleware rules live in `app/Http/Middleware/CLAUDE.md`.

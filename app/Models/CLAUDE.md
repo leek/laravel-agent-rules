@@ -97,6 +97,14 @@ protected static function booted(): void
 - **MUST** pick global scope OR named scope for the same filter — not both, unless layered behaviour is intended.
 - **SHOULD** keep global scopes minimal — they apply to every query and are easy to forget.
 
+## Prevent lazy loading in dev
+
+In `AppServiceProvider::boot()`, throw on any lazy-loaded relation in non-production environments so N+1 surfaces during development instead of in prod logs:
+
+```php
+Model::preventLazyLoading(! app()->isProduction());
+```
+
 ## Eager loading (avoid N+1)
 
 - **MUST** eager-load relations the caller will touch:

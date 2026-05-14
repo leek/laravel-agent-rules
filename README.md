@@ -34,23 +34,29 @@ Supported agents: `claude`, `codex`, `gemini`, `cursor`, `windsurf`, `cline`. Th
 | `app/Http/Controllers/`           | Controller rules + audience namespacing                   |
 | `app/Http/Requests/`              | Form Request rules + `toDto()` pattern                    |
 | `app/Http/Resources/`             | API Resource pattern + paginated envelope                 |
-| `app/Http/Middleware/`            | Middleware rules                                          |
+| `app/Http/Middleware/`            | Middleware rules: terminate, variadic params, bootstrap registration |
+| `app/Policies/`                   | Policy auto-discovery, `before()` fall-through, `Response::deny*` helpers |
+| `app/Rules/`                      | Custom `ValidationRule` classes vs closure rules vs FormRequest `after()` |
 | `app/Actions/`                    | Action rules (default home for business logic)            |
-| `app/Support/`                    | Support class rules                                       |
-| `app/Observers/`                  | Observer rules                                            |
+| `app/Support/`                    | Support classes + caching (`flexible`, `lock`, `memo`, keys, invalidation) |
+| `app/Observers/`                  | Observer rules + `#[ObservedBy]` attribute registration   |
 | `app/Events/`                     | Event + listener rules                                    |
-| `app/Jobs/`                       | Queue job rules                                           |
-| `app/Livewire/`                   | Livewire auto-save, morphing, component aliasing          |
-| `app/Notifications/`              | Notification naming + Laravel 12+ listener auto-discovery |
+| `app/Listeners/`                  | `ShouldQueue` / `ShouldQueueAfterCommit`, auto-discovery, multi-method listeners |
+| `app/Jobs/`                       | Queue jobs: retries, afterCommit, unique/overlapping, batching, idempotency |
+| `app/Livewire/`                   | Auto-save, morphing, `wire:model.defer`, `#[Computed]`, `$queryString`, authorize-in-action |
+| `app/Notifications/`              | Channels, `viaQueues`, `shouldSend`, bulk send, on-demand routing, custom channels |
+| `app/Features/`                   | Feature flags with Laravel Pennant (closure + class features, rollouts, cleanup) |
+| `app/View/Components/`            | Class-based Blade components                              |
 | `app/Console/Commands/`           | Artisan command rules                                     |
 | `app/Providers/`                  | Container bindings (interface → implementation)           |
 | `config/`                         | `env()` / `config()` rules                                |
-| `routes/`                         | Routing + route naming                                    |
+| `routes/`                         | Routing, named routes, API versioning, scheduling (`routes/console.php`) |
+| `resources/views/components/`     | Anonymous Blade components: `@props`, `$attributes`, `@class`/`@style`/`@pushOnce`/`@fragment` |
 | `database/`                       | Schema, keys, indexes, table/column naming                |
 | `database/migrations/`            | Migration workflow                                        |
 | `database/factories/`             | Factory rules                                             |
 | `database/seeders/`               | Seeder rules                                              |
-| `tests/`                          | Pest testing rules                                        |
+| `tests/`                          | Pest testing: datasets, Sanctum abilities, soft-delete asserts, allowlisted fakes |
 
 ## Versioning
 

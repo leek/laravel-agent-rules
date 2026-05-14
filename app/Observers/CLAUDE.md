@@ -13,6 +13,26 @@
 
 > Use sparingly. Default home for new logic is an **Action** (`app/Actions/`).
 
+## Registration — `#[ObservedBy]` attribute (Laravel 11+)
+
+**PREFER** the `#[ObservedBy(...)]` attribute on the model over `Model::observe(...)` in a service provider:
+
+```php
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+
+#[ObservedBy(OrderObserver::class)]
+final class Order extends Model
+{
+    // ...
+}
+```
+
+Fallback (older versions, or when registering observers conditionally) — `AppServiceProvider::boot()`:
+
+```php
+Order::observe(OrderObserver::class);
+```
+
 ## Create
 
 ```bash

@@ -26,6 +26,27 @@ app/Http/Controllers/Api/Admin/UserController.php // admin API
 php artisan make:controller UserController --resource
 ```
 
+## Controller-level middleware — `HasMiddleware`
+
+When middleware needs to apply to specific controller actions, **MUST** implement the `HasMiddleware` interface and return middleware definitions from a static `middleware()` method. Do NOT use the legacy `$this->middleware(...)` constructor call — it is deprecated as of Laravel 11.
+
+```php
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+
+final class PostController extends Controller implements HasMiddleware
+{
+    public static function middleware(): array
+    {
+        return [
+            'auth',
+            new Middleware('subscribed', only: ['create', 'store']),
+            new Middleware('throttle:uploads', only: ['store', 'update']),
+        ];
+    }
+}
+```
+
 ## Example
 
 ```php
