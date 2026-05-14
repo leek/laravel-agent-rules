@@ -177,3 +177,21 @@ Reserve named queues for priority bands; dispatch with `->onQueue('high')`:
 ```php
 SendWelcomeEmailJob::dispatch($user)->onQueue('high');
 ```
+
+## Trim serialized payload — `#[WithoutRelations]`
+
+When a job constructor accepts a model that was eager-loaded upstream, the relations get serialized into the queue payload — bloating Redis/DB and risking stale relations at run time. Annotate the param with `#[WithoutRelations]` to strip them before serialization:
+
+```php
+use Illuminate\Queue\Attributes\WithoutRelations;
+
+public function __construct(
+    #[WithoutRelations] public readonly Order $order,
+) {}
+```
+
+Class-wide form: add the `Illuminate\Queue\Attributes\WithoutRelations` attribute on the class, or `use SerializesModels;` with `protected $deleteWhenMissingModels = true;` to bail cleanly when the model has been deleted before the worker picks the job up.
+
+## Missing-model handling — `#[DeleteWhenMissingModels]`
+
+Set `public bool $deleteWhenMissingModels = true;` (or annotate the class with `#[DeleteWhenMissingModels]` on queued listeners) so the job/listener is silently dropped if its serialized model row was deleted between dispatch and execution — instead of failing every retry with `ModelNotFoundException`.

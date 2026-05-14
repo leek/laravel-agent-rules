@@ -28,7 +28,8 @@ class VerifyUserAction
 ## Create
 
 ```bash
-php artisan make:action VerifyUserAction   # requires rockero-cz/laravel-starter-kit
+php artisan make:class Actions/VerifyUserAction    # L12+ native
+php artisan make:action VerifyUserAction           # only if rockero-cz/laravel-starter-kit installed
 ```
 
-Or plain class under `app/Actions/`.
+Or just add a plain class under `app/Actions/`.

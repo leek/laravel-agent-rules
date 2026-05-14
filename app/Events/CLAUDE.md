@@ -26,3 +26,18 @@ OrderCreated::dispatch();
 // or
 event(new OrderCreated());
 ```
+
+## Transaction safety — `ShouldDispatchAfterCommit`
+
+When the event is fired from inside a DB transaction and listeners depend on rows written there, **MUST** implement `ShouldDispatchAfterCommit` on the event so dispatch is deferred until the outer transaction commits.
+
+```php
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+
+final class OrderCreated implements ShouldDispatchAfterCommit
+{
+    public function __construct(public readonly Order $order) {}
+}
+```
+
+Without it, a sync listener can run mid-transaction and observe a partial state; a queued listener can be picked up before the parent transaction commits. The job-side analogue is `->afterCommit()` / `$afterCommit = true` (see `app/Jobs/CLAUDE.md`).

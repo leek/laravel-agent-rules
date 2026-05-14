@@ -1,10 +1,23 @@
 # Livewire
 
+> Targets Livewire 3 (default in Laravel 11+).
+
 ## `wire:model` modifiers
 
-- **MUST** default to `wire:model.defer` for form fields — batches updates until submit. Plain `wire:model` sends a network roundtrip on every keystroke.
-- **SHOULD** use `wire:model.debounce.300ms` for search/filter inputs that should react live without flooding the server.
-- **SHOULD** use `wire:model.lazy` when you want a single roundtrip on blur.
+Livewire 3 flipped the v2 defaults. **`wire:model` is now deferred by default** — sync happens on the next server request, not per keystroke.
+
+- **MUST** default to plain `wire:model` for form fields — defers until submit/action.
+- **SHOULD** use `wire:model.live` only when you genuinely need live sync (e.g. live-validation, dependent dropdowns).
+- **SHOULD** use `wire:model.live.debounce.300ms` for search/filter inputs (note: `.live` must come first; bare `.debounce` does nothing on a deferred model).
+- **SHOULD** use `wire:model.blur` when you want a single roundtrip on blur. (v2 `wire:model.lazy` was renamed to `.blur`.)
+- **SHOULD** use `wire:model.change` on `<select>` when you want sync on option change rather than blur.
+
+```blade
+<input wire:model="title">                              {{-- deferred --}}
+<input wire:model.live="search">                        {{-- per keystroke --}}
+<input wire:model.live.debounce.300ms="search">         {{-- debounced live --}}
+<input wire:model.blur="email">                         {{-- on blur --}}
+```
 
 ## Authorization
 
@@ -24,16 +37,21 @@ public function publish(): void
 }
 ```
 
-## URL state with `$queryString`
+## URL state — `#[Url]`
 
-Sync component state to the URL for filter/search/sort UIs so refresh and back/forward preserve state:
+**PREFER** `#[Url]` per-property over the legacy `$queryString` array. Sync component state to the URL for filter/search/sort UIs so refresh and back/forward preserve state:
 
 ```php
-public array $queryString = [
-    'search' => ['except' => ''],
-    'status' => ['except' => 'all'],
-    'page'   => ['except' => 1],
-];
+use Livewire\Attributes\Url;
+
+#[Url(except: '')]
+public string $search = '';
+
+#[Url(except: 'all')]
+public string $status = 'all';
+
+#[Url(history: true)]
+public int $page = 1;
 
 public function updatingSearch(): void
 {
@@ -41,9 +59,28 @@ public function updatingSearch(): void
 }
 ```
 
+- `except` — keep value out of the URL when it equals this (clean URLs on defaults).
+- `history: true` — `pushState` so the back button restores previous values; default `replaceState`.
+- `as: 'q'` — rename the query-string key.
 - **MUST** reset pagination when a filter changes via `updating{Property}()` — otherwise stale `page=N` runs against a smaller filtered set and returns an empty page.
 
-## Computed properties
+## Property-level validation — `#[Validate]`
+
+**PREFER** `#[Validate]` over a `rules()` method when rules live on the property:
+
+```php
+use Livewire\Attributes\Validate;
+
+#[Validate('required|min:3')]
+public string $title = '';
+
+#[Validate(['required', 'email'])]
+public string $email = '';
+```
+
+Then `$this->validate()` runs all attribute-defined rules. Combine with `wire:model.blur` for real-time validation.
+
+## Computed properties — `#[Computed]`
 
 Use `#[Computed]` for derived values accessed many times per render — Livewire memoizes the result for the lifetime of the render pass:
 
@@ -59,6 +96,67 @@ public function unreadCount(): int
 
 Read in Blade as `{{ $this->unreadCount }}`. Without `#[Computed]`, the method runs once per access — death-by-N-queries.
 
+`#[Computed(cache: true)]` persists across renders; `#[Computed(persist: 60)]` caches in the cache store for N seconds.
+
+## Event listeners — `#[On]`
+
+**PREFER** `#[On('event-name')]` on a handler method over the legacy `protected $listeners = [...]` array:
+
+```php
+use Livewire\Attributes\On;
+
+#[On('order-placed')]
+public function refreshTotals(int $orderId): void
+{
+    // ...
+}
+```
+
+Wildcards: `#[On('order-*')]`. Dispatch from Blade: `$dispatch('order-placed', orderId: 42)`.
+
+## Layout + title — `#[Layout]` / `#[Title]`
+
+For full-page Livewire components, pin layout and `<title>` via attributes instead of returning a layout view:
+
+```php
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+
+#[Layout('layouts.app')]
+#[Title('Dashboard')]
+class Dashboard extends Component
+{
+    // ...
+}
+```
+
+## Tamper-proof properties — `#[Locked]`
+
+**MUST** mark any property that holds an authorization-relevant identifier (e.g. `$userId`, `$tenantId`) as `#[Locked]`. Public Livewire properties are otherwise client-mutable.
+
+```php
+use Livewire\Attributes\Locked;
+
+#[Locked]
+public int $userId;
+```
+
+Mutating a locked property from the client throws.
+
+## Parent → child binding — `#[Reactive]` / `#[Modelable]`
+
+- **`#[Reactive]`** on a child property — child re-renders when the parent's bound value changes.
+- **`#[Modelable]`** on a child property — lets the parent use `wire:model` against the child component:
+
+```php
+// child
+#[Modelable]
+public string $value = '';
+
+// parent
+<livewire:custom-input wire:model="title" />
+```
+
 ## Auto-save patterns
 
 - `updated()` fires on every field change — add server-side throttling (timestamp comparison) to prevent write storms during fast typing.
@@ -67,7 +165,7 @@ Read in Blade as `{{ $this->unreadCount }}`. Without `#[Computed]`, the method r
 
 ## Event chain contract
 
-- When dispatching events, verify ALL dependent components listen and re-query. List listeners explicitly in the component.
+- When dispatching events, verify ALL dependent components listen and re-query. List listeners explicitly via `#[On]` so the contract is greppable.
 
 ## Double-refresh
 

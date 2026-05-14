@@ -6,10 +6,22 @@
 
 - **MUST** be `{SingularModel}Policy` (e.g. `PostPolicy`, `OrderPolicy`).
 
-## Auto-discovery
+## Discovery
 
-- **MUST** keep policies under `App\Policies\` with the `{Model}Policy` naming — Laravel auto-resolves them. No manual registration needed.
-- Register manually in `AppServiceProvider::boot()` via `Gate::policy(Model::class, Policy::class)` **only** when the namespace or naming convention is non-standard.
+Three ways to bind a model to a policy, in order of preference:
+
+1. **`#[UsePolicy]` attribute on the model (L11+)** — explicit, greppable, no convention magic.
+
+   ```php
+   use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+
+   #[UsePolicy(PostPolicy::class)]
+   final class Post extends Model {}
+   ```
+
+2. **Auto-discovery** — keep policies under `App\Policies\` with `{Model}Policy` naming and Laravel resolves them. No registration needed.
+
+3. **`Gate::policy(Model::class, Policy::class)`** in `AppServiceProvider::boot()` — only when the model lives outside the convention and you can't (or won't) put an attribute on it.
 
 ## Method shape
 

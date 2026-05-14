@@ -10,7 +10,7 @@
 
 - **MUST NOT** contain business logic — push to `app/Actions/` or `app/Support/`.
 - **SHOULD** declare `$fillable` (or `$guarded = []` with care) — never leave mass-assignment unconfigured.
-- **SHOULD** declare `$casts` for every column that is not a plain string/int (datetimes, enums, JSON, money objects).
+- **SHOULD** declare casts for every column that is not a plain string/int (datetimes, enums, JSON, money objects). Use the `casts()` method (L11+) — see below.
 - **SHOULD** use enums for finite state columns (`status`, `role`, `tier`) rather than free-form strings.
 
 ## Create
@@ -24,14 +24,15 @@ php artisan make:model Product
 ```php
 final class Project extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['name', 'owner_id', 'status'];
 
-    protected $casts = [
-        'status'      => ProjectStatus::class,
-        'archived_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status'      => ProjectStatus::class,
+            'archived_at' => 'datetime',
+        ];
+    }
 
     public function owner(): BelongsTo
     {
@@ -40,14 +41,21 @@ final class Project extends Model
 }
 ```
 
+> Fresh L11+ skeletons no longer pull in `HasFactory` by default — factories are resolved via convention or `#[UseFactory]` (see below).
+
 ## Casts and attributes
 
-Use enum or value-object casts to keep typing tight:
+`casts()` method (L11+) is preferred over the legacy `protected $casts = [...]` property because it allows runtime class references and is type-safe. The property still works.
+
+Built-in casts include `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable::class`, `AsEnumCollection::of(...)`, `AsCollection::of(SomeClass::class)` (L12+ — maps each item into a class), `'json:unicode'` (L12+ — JSON without escaping unicode), `'asFluent'` (L12+).
 
 ```php
-protected $casts = [
-    'status' => ProjectStatus::class,
-];
+protected function casts(): array
+{
+    return [
+        'status' => ProjectStatus::class,
+    ];
+}
 ```
 
 Custom value-object cast via accessor/mutator:
@@ -62,28 +70,91 @@ protected function budgetCents(): Attribute
 }
 ```
 
+## Model wiring — PHP attributes (L11+)
+
+**PREFER** PHP attributes over magic conventions or `booted()` registrations. They make the wiring greppable and explicit.
+
+```php
+use Illuminate\Database\Eloquent\Attributes\CollectedBy;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+
+#[ObservedBy(OrderObserver::class)]
+#[ScopedBy(ActiveScope::class)]
+#[CollectedBy(OrderCollection::class)]
+#[UseFactory(OrderFactory::class)]
+#[UsePolicy(OrderPolicy::class)]
+#[UseEloquentBuilder(OrderBuilder::class)]
+final class Order extends Model
+{
+    // ...
+}
+```
+
+| Attribute | Replaces |
+| --- | --- |
+| `#[ObservedBy]` | `Model::observe(...)` in a provider |
+| `#[ScopedBy]` | `static::booted()` + `addGlobalScope(...)` |
+| `#[CollectedBy]` | `newCollection()` override |
+| `#[UseFactory]` | `HasFactory::newFactory()` override / naming convention |
+| `#[UsePolicy]` | `Gate::policy(Model::class, Policy::class)` |
+| `#[UseEloquentBuilder]` | `newEloquentBuilder()` override |
+| `#[UseResource]` / `#[UseResourceCollection]` | Resource convention lookup |
+
 ## Relationships
 
 - **MUST** type-hint return types on relation methods (`BelongsTo`, `HasMany`, `MorphTo`, etc.).
 - **SHOULD** name `belongsTo` methods after the parent model singular (`owner()` → `User`).
 
-## Query scopes
+## Query scopes — `#[Scope]` (L11+)
 
-**SHOULD** add a scope for any filter used in more than one place:
+**PREFER** the `#[Scope]` attribute over the legacy `scopeXxx` method-naming convention. Both work; the attribute is more explicit and chainable without IDE magic.
+
+```php
+use Illuminate\Database\Eloquent\Attributes\Scope;
+
+#[Scope]
+protected function ownedBy(Builder $query, int $userId): void
+{
+    $query->where('owner_id', $userId);
+}
+
+// Call site (unchanged):
+$projects = Project::ownedBy($user->id)->get();
+```
+
+Legacy form still supported:
 
 ```php
 public function scopeOwnedBy(Builder $query, int $userId): Builder
 {
     return $query->where('owner_id', $userId);
 }
-
-// Call site:
-$projects = Project::ownedBy($user->id)->get();
 ```
 
-## Global scopes
+**SHOULD** add a scope for any filter used in more than one place.
+
+## Global scopes — `#[ScopedBy]` (L11+)
 
 Use for a filter that **always** applies (soft deletes, multi-tenant scoping):
+
+```php
+final class ActiveScope implements Scope
+{
+    public function apply(Builder $builder, Model $model): void
+    {
+        $builder->whereNull('archived_at');
+    }
+}
+
+#[ScopedBy(ActiveScope::class)]
+final class Project extends Model {}
+```
+
+Legacy `booted()` form still supported:
 
 ```php
 protected static function booted(): void
@@ -199,3 +270,4 @@ Product::query()->upsert(
 
 - Use `SoftDeletes` for records that must be recoverable (orders, invoices, user-generated content).
 - **AVOID** soft-deleting reference/lookup data — hard delete or archive instead.
+- L12+ removed instance `$model->restore()` for soft deletes — restore by clearing `deleted_at` and calling `save()`, or use the query-builder `restore()` on a scoped query.

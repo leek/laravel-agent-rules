@@ -10,6 +10,14 @@
 
 - **MUST** define every required column in `definition()`.
 - **SHOULD** use related factories for foreign keys (`'category_id' => Category::factory()`).
+- **PREFER** `#[UseFactory]` on the model over the legacy `HasFactory::newFactory()` override / naming convention.
+
+```php
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+
+#[UseFactory(ProductFactory::class)]
+final class Product extends Model {}
+```
 
 ## Create
 

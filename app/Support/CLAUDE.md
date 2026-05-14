@@ -14,10 +14,10 @@
 ## Create
 
 ```bash
-php artisan make:class Support/Cart   # starter-kit
+php artisan make:class Support/Cart
 ```
 
-Or plain class under `app/Support/`.
+`make:class` is built into Laravel 12+. Or just add a plain class under `app/Support/`.
 
 ---
 
