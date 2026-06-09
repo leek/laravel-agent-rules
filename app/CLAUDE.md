@@ -13,6 +13,16 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 | Class property | `camelCase`                      | `$isActive`, `$createdAt`                           |
 | Variable       | `camelCase`                      | `$isActive`, `$createdAt`                           |
 
+## Where does logic go?
+
+| Situation                                                        | Use                                  |
+| ---------------------------------------------------------------- | ------------------------------------ |
+| Synchronous business operation — the caller needs the result     | Action (`app/Actions/`)              |
+| Work that can run later, off the request path                    | Job (`app/Jobs/`)                    |
+| One occurrence, several unrelated side effects (fan-out)         | Event + Listeners (`app/Events/`)    |
+| Telling a user something via mail / database / SMS / broadcast   | Notification (`app/Notifications/`)  |
+| Stateless helper with no side effects                            | Support class (`app/Support/`)       |
+
 ## Class naming index
 
 Per-class-type naming rules are colocated with the directory that holds the class. Quick map:
@@ -20,9 +30,11 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Class type   | Directory                       |
 | ------------ | ------------------------------- |
 | Action       | `app/Actions/`                  |
+| Cast         | `app/Casts/`                    |
 | Command      | `app/Console/Commands/`         |
 | Controller   | `app/Http/Controllers/`         |
 | Data (DTO)   | `app/Data/`                     |
+| Enum         | `app/Enums/`                    |
 | Event        | `app/Events/`                   |
 | Exception    | `app/Exceptions/`               |
 | Factory      | `database/factories/`           |
@@ -44,9 +56,7 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 For class types without a dedicated CLAUDE.md, defaults:
 
 - **Data (DTO)** — `{SingularModel}Data` (e.g. `UserData`).
-- **Exception** — `{Cause}Exception` (e.g. `ValidationException`, `DuplicateEntryException`).
 - **Interface** — adjective/noun, **no suffix** (e.g. `Loggable`, `Configurable`).
-- **Mail** — event-like, **no suffix** (e.g. `InvoicePaid`, `OrderShipped`).
 - **Notification** — event-like, **no suffix** (e.g. `InvoicePaid`, `PasswordReset`).
 - **Policy** — `{SingularModel}Policy`.
 - **Provider** — `{Domain}Provider` (e.g. `PaymentProvider`).

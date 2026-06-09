@@ -4,7 +4,7 @@
 
 ## Naming
 
-- **MUST** name events `{Subject}{PastTense}Event` — e.g. `UserCreatedEvent`, `OrderShippedEvent`. (Or the unsuffixed form if the team has standardised on it — pick one and stay consistent.)
+- **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Laravel core convention; matches Notifications and the examples throughout these rules.
 - Listeners live in `app/Listeners/`.
 
 ## Rules

@@ -270,4 +270,4 @@ Product::query()->upsert(
 
 - Use `SoftDeletes` for records that must be recoverable (orders, invoices, user-generated content).
 - **AVOID** soft-deleting reference/lookup data — hard delete or archive instead.
-- L12+ removed instance `$model->restore()` for soft deletes — restore by clearing `deleted_at` and calling `save()`, or use the query-builder `restore()` on a scoped query.
+- Restore with `$model->restore()` (fires the `restored` event), `restoreQuietly()` to skip events, or query-builder `restore()` on a `withTrashed()` query for bulk restores (no model events, like other mass operations).
