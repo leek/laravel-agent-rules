@@ -68,6 +68,10 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Rules/`                      | Custom `ValidationRule` classes vs closure rules vs FormRequest `after()` |
 | `app/Actions/`                    | Action rules (default home for business logic)            |
 | `app/Support/`                    | Support classes + caching (`flexible`, `lock`, `memo`, keys, invalidation) |
+| `app/Services/`                   | Service layer: external-system/3rd-party wrappers; when to use vs Action/Support |
+| `app/Concerns/`                   | Traits: one capability per trait, `boot`/`initialize` hooks, declared host contracts |
+| `app/Contracts/`                  | Interfaces: ISP, depend-on-abstraction, bind in a provider |
+| `app/States/`                     | State machines (`spatie/laravel-model-states`): transition graph, guarded transitions |
 | `app/Exceptions/`                 | Domain exceptions, static constructors, L11+ `withExceptions()` config |
 | `app/Observers/`                  | Observer rules + `#[ObservedBy]` attribute registration   |
 | `app/Events/`                     | Event + listener rules                                    |

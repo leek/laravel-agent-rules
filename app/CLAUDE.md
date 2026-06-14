@@ -21,6 +21,7 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 | Work that can run later, off the request path                    | Job (`app/Jobs/`)                    |
 | One occurrence, several unrelated side effects (fan-out)         | Event + Listeners (`app/Events/`)    |
 | Telling a user something via mail / database / SMS / broadcast   | Notification (`app/Notifications/`)  |
+| Wrapping an external system / SDK, or a cohesive multi-method capability | Service (`app/Services/`)    |
 | Stateless helper with no side effects                            | Support class (`app/Support/`)       |
 
 ## Class naming index
@@ -32,6 +33,8 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Action       | `app/Actions/`                  |
 | Cast         | `app/Casts/`                    |
 | Command      | `app/Console/Commands/`         |
+| Concern (Trait) | `app/Concerns/`              |
+| Contract (Interface) | `app/Contracts/`       |
 | Controller   | `app/Http/Controllers/`         |
 | Data (DTO)   | `app/Data/`                     |
 | Enum         | `app/Enums/`                    |
@@ -50,16 +53,16 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Request      | `app/Http/Requests/`            |
 | Rule         | `app/Rules/`                    |
 | Seeder       | `database/seeders/`             |
+| Service      | `app/Services/`                 |
+| State        | `app/States/`                   |
 | Support      | `app/Support/`                  |
 | Test         | `tests/`                        |
 
 For class types without a dedicated CLAUDE.md, defaults:
 
 - **Data (DTO)** — `{SingularModel}Data` (e.g. `UserData`).
-- **Interface** — adjective/noun, **no suffix** (e.g. `Loggable`, `Configurable`).
 - **Notification** — event-like, **no suffix** (e.g. `InvoicePaid`, `PasswordReset`).
 - **Policy** — `{SingularModel}Policy`.
 - **Provider** — `{Domain}Provider` (e.g. `PaymentProvider`).
 - **Rule** — rule meaning, **no suffix** (e.g. `ValidPhoneNumber`, `Uppercase`).
 - **Scope** — `{Adjective}Scope` (e.g. `ActiveScope`).
-- **Trait** — adjective or `With{Feature}`, no suffix (e.g. `Sortable`, `WithForm`).

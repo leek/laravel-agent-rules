@@ -23,6 +23,23 @@ Livewire 3 flipped the v2 defaults. **`wire:model` is now deferred by default** 
 
 - **MUST** call `$this->authorize(...)` in `mount()` AND inside every action method that mutates state. A `mount()`-only check is bypassable — the component is alive in the browser and any public method is callable directly.
 
+❌ Authorized only in `mount()` — `publish()` is a public method callable directly from the browser, unchecked:
+
+```php
+public function mount(Post $post): void
+{
+    $this->authorize('update', $post);
+    $this->post = $post;
+}
+
+public function publish(): void
+{
+    $this->post->update(['published' => true]);   // no authorize() — anyone can call this
+}
+```
+
+✅ Authorize in `mount()` AND every mutating action:
+
 ```php
 public function mount(Post $post): void
 {

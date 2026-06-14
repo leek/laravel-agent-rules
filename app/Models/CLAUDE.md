@@ -178,7 +178,18 @@ Model::preventLazyLoading(! app()->isProduction());
 
 ## Eager loading (avoid N+1)
 
-- **MUST** eager-load relations the caller will touch:
+- **MUST** eager-load relations the caller will touch.
+
+❌ Lazy access inside a loop — one query per row (N+1):
+
+```php
+$orders = Order::latest()->paginate(25);
+foreach ($orders as $order) {
+    echo $order->customer->name;   // a fresh SELECT every iteration
+}
+```
+
+✅ Eager-load up front:
 
 ```php
 $orders = Order::query()

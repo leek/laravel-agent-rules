@@ -21,6 +21,19 @@ final class SendOrderConfirmation
 ```
 
 - **MUST** type-hint the event parameter. An untyped `handle($event)` is silently skipped by auto-discovery.
+
+❌ Untyped — auto-discovery can't match it to an event, so it never fires:
+
+```php
+public function handle($event): void { /* ... */ }
+```
+
+✅ Type-hint the event:
+
+```php
+public function handle(OrderPlaced $event): void { /* ... */ }
+```
+
 - **MUST NOT** also call `Event::listen(OrderPlaced::class, SendOrderConfirmation::class)` in `EventServiceProvider` — double registration fires the listener twice (silent duplicate side effects).
 
 Verify what's actually registered:

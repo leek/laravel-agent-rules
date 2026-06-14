@@ -31,6 +31,17 @@ event(new OrderCreated());
 
 When the event is fired from inside a DB transaction and listeners depend on rows written there, **MUST** implement `ShouldDispatchAfterCommit` on the event so dispatch is deferred until the outer transaction commits.
 
+❌ Plain event dispatched inside a transaction — a sync listener observes partial state:
+
+```php
+final class OrderCreated  // no ShouldDispatchAfterCommit
+{
+    public function __construct(public readonly Order $order) {}
+}
+```
+
+✅ Defer dispatch until the transaction commits:
+
 ```php
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
