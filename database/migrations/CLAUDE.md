@@ -80,3 +80,22 @@ return new class extends Migration
     }
 };
 ```
+
+## Foreign keys — prefer `foreignIdFor(Model::class)`
+
+For **new** FK columns, **PREFER** `$table->foreignIdFor(Model::class)` over `$table->foreignId('col')->constrained('table')`:
+
+```php
+$table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();                       // user_id
+$table->foreignIdFor(User::class, 'owner_id')->nullable()->constrained()->nullOnDelete();  // custom name
+```
+
+It resolves the column name and referenced table from `$model->getTable()`, so it survives table/model renames and stays tied to the model class.
+
+- **MUST NOT** use it in an ALTER to *modify* an existing column — `foreignId`/`foreignIdFor` only ADD. To change one: `unsignedBigInteger('col')->nullable()->change()` then a separate `$table->foreign('col')->references(...)`.
+
+## `useCurrentOnUpdate()` is MySQL-only
+
+`$table->timestamp('x')->useCurrentOnUpdate()` emits SQL **only** on MySQL/MariaDB. `PostgresGrammar` silently drops it — no SQL, no error. `updated_at` still appears to work on Postgres because Eloquent sets it at the application layer in `Model::save()`; **raw `UPDATE`s that bypass Eloquent will NOT touch it.**
+
+- **MUST** treat `useCurrentOnUpdate()` as dead code on Postgres — remove it. If you need a DB-level auto-update, write an explicit `BEFORE UPDATE` trigger.
