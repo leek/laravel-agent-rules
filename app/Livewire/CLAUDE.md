@@ -1,22 +1,22 @@
 # Livewire
 
-> Targets Livewire 3 (default in Laravel 11+).
+> Targets Livewire 4 (current major).
 
 ## `wire:model` modifiers
 
-Livewire 3 flipped the v2 defaults. **`wire:model` is now deferred by default** — sync happens on the next server request, not per keystroke.
+**`wire:model` is deferred by default** — sync happens on the next server request, not per keystroke (the default since v3; v2's per-keystroke binding is gone).
 
 - **MUST** default to plain `wire:model` for form fields — defers until submit/action.
 - **SHOULD** use `wire:model.live` only when you genuinely need live sync (e.g. live-validation, dependent dropdowns).
 - **SHOULD** use `wire:model.live.debounce.300ms` for search/filter inputs (note: `.live` must come first; bare `.debounce` does nothing on a deferred model).
-- **SHOULD** use `wire:model.blur` when you want a single roundtrip on blur. (v2 `wire:model.lazy` was renamed to `.blur`.)
-- **SHOULD** use `wire:model.change` on `<select>` when you want sync on option change rather than blur.
+- **SHOULD** use `wire:model.live.blur` when you want a single server roundtrip on blur. **In v4.1+, bare `.blur` (and `.change`) only control client-side state syncing — you must prefix `.live` to trigger a network request.**
+- **SHOULD** use `wire:model.live.change` on `<select>` when you want a server roundtrip on option change rather than blur.
 
 ```blade
 <input wire:model="title">                              {{-- deferred --}}
 <input wire:model.live="search">                        {{-- per keystroke --}}
 <input wire:model.live.debounce.300ms="search">         {{-- debounced live --}}
-<input wire:model.blur="email">                         {{-- on blur --}}
+<input wire:model.live.blur="email">                    {{-- server roundtrip on blur --}}
 ```
 
 ## Authorization

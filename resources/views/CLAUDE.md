@@ -29,5 +29,7 @@
 ✅ Data attribute or `@json`, read from a compiled JS file:
 
 ```blade
-<button class="js-fav-article" data-article="@json($article)">{{ $article->name }}</button>
+<button class="js-fav-article" data-article='@json($article)'>{{ $article->name }}</button>
 ```
+
+**MUST** wrap `@json` in **single** quotes — its output keeps literal `"` around every key/value, which would terminate a double-quoted attribute. (`@json` hex-escapes inner `'` via `JSON_HEX_APOS`, so single quotes stay safe.)

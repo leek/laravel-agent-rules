@@ -79,7 +79,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Broadcasting/`               | Channel authorization classes (`make:channel`), `channels.php` registration, presence vs private, `ShouldBroadcast` events |
 | `app/Listeners/`                  | `ShouldQueue` / `ShouldQueueAfterCommit`, auto-discovery, multi-method listeners |
 | `app/Jobs/`                       | Queue jobs: retries, afterCommit, unique/overlapping, batching, idempotency |
-| `app/Livewire/`                   | Auto-save, morphing, `wire:model.defer`, `#[Computed]`, `$queryString`, authorize-in-action |
+| `app/Livewire/`                   | Livewire 4: auto-save, morphing, deferred `wire:model` (`.live`/`.live.blur`), `#[Computed]`, `#[Url]`, authorize-in-action |
 | `app/Notifications/`              | Channels, `viaQueues`, `shouldSend`, bulk send, on-demand routing, custom channels |
 | `app/Mail/`                       | Mailables: envelope/content API, markdown, queueing, Mailable vs Notification |
 | `app/Features/`                   | Feature flags with Laravel Pennant (closure + class features, rollouts, cleanup) |

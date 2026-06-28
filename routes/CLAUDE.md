@@ -90,7 +90,7 @@ Route::prefix('v1')
 Route::middleware('throttle:5,1')->post('/login', LoginController::class);
 ```
 
-For complex limiters, define them in `App\Providers\RouteServiceProvider::configureRateLimiting()` and reference by name (`throttle:api`).
+For complex/named limiters, define them in `App\Providers\AppServiceProvider::boot()` with `RateLimiter::for(...)` and reference by name (`throttle:uploads`). The L11+ skeleton has no `RouteServiceProvider` — see `app/Http/Middleware/CLAUDE.md` for the `RateLimiter::for()` example.
 
 ## Custom parameter → model binding
 
