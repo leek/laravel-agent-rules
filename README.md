@@ -56,12 +56,12 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
-| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools), IoC/DI, constants & i18n, class-type → directory index |
+| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools), IoC/DI, constants & i18n, domain sub-namespacing, class-type → directory index |
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Enums/`                      | Backed enums: string backing, `casts()`, `Rule::enum()`, label methods |
 | `app/Casts/`                      | Custom Eloquent casts: value objects, `CastsAttributes`, inbound-only |
 | `app/Data/`                       | DTOs: `{Verb}{Model}Data` naming, immutable, built at the boundary (`toDto()`), plain vs `spatie/laravel-data` |
-| `app/Http/Controllers/`           | Controller rules + audience namespacing                   |
+| `app/Http/Controllers/`           | Controller rules + audience/domain namespacing            |
 | `app/Http/Requests/`              | Form Request rules + `toDto()` pattern                    |
 | `app/Http/Resources/`             | API Resource pattern + paginated envelope                 |
 | `app/Http/Middleware/`            | Middleware rules: terminate, variadic params, bootstrap registration |

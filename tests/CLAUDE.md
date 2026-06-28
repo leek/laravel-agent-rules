@@ -24,6 +24,7 @@ Default test framework: [Pest](https://pestphp.com/). PHPUnit-style works under 
 
 - **Feature tests** are the default. They exercise the full stack and catch the largest class of regressions for the smallest amount of code. Place under `tests/Feature/`.
 - **Unit tests** are used only for genuinely isolated logic (pure functions, complex calculations). Place under `tests/Unit/`. **AVOID** unit tests that mock the framework just to bypass it.
+- **SHOULD** mirror the app's domain sub-namespacing in the test path — a test for `App\Http\Controllers\Billing\InvoiceController` lives at `tests/Feature/Billing/InvoiceControllerTest.php` (`make:test Billing/InvoiceControllerTest`). See `app/CLAUDE.md`.
 
 ## How to write tests
 

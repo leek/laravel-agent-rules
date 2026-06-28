@@ -26,6 +26,49 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 | Wrapping an external system / SDK, or a cohesive multi-method capability | Service (`app/Services/`)    |
 | Stateless helper with no side effects                            | Support class (`app/Support/`)       |
 
+## Organize by domain (sub-namespacing)
+
+Group classes by **business domain** in a subfolder *inside* the class-type folder. This adds a domain axis on top of Laravel's default folders — you keep framework conventions and package compatibility while making the business domain obvious. It's the structured alternative to letting a folder fill up with unrelated classes (or inventing vague catch-alls like `Helpers` / `Utilities`, which this repo already replaces with typed homes).
+
+- **SHOULD** start flat. A class-type folder serving one domain stays flat (`app/Models/User.php`) — don't pre-create domain folders for a small app.
+- **MUST** group by domain subfolder as soon as a folder holds classes from **2+ distinct domains** — don't let a flat folder accumulate unrelated classes. (In practice this bites once a folder passes ~8 files.)
+- **MUST** match the namespace to the directory (PSR-4) and pass the sub-path to `make:*`:
+
+```bash
+php artisan make:model   Billing/Invoice            # App\Models\Billing\Invoice
+php artisan make:job     Billing/SyncInvoiceToErp
+php artisan make:policy  Billing/InvoicePolicy
+php artisan make:request Billing/StoreInvoiceRequest
+```
+
+- **MUST** use **one** domain name across every folder — `Billing/` in Models, Jobs, Policies, and Requests alike; never `Billing` in one and `Invoicing` in another.
+- **SHOULD** name domains after the app's own vocabulary and keep them aligned with how routes/modules are already grouped.
+
+✅ A grown app grouped by domain — the domain is obvious at a glance:
+
+```
+app/
+  Http/Controllers/Billing/InvoiceController.php
+  Http/Requests/Billing/StoreInvoiceRequest.php
+  Jobs/Billing/SyncInvoiceToErp.php
+  Models/Billing/Invoice.php
+  Policies/Billing/InvoicePolicy.php
+```
+
+❌ Three domains dumped flat — every folder is a junk drawer:
+
+```
+app/Models/Invoice.php   Order.php   Ticket.php
+app/Jobs/SyncInvoiceToErp.php   ShipOrder.php   EscalateTicket.php
+```
+
+**Interactions with other folders:**
+
+- **Controllers** already namespace by audience/version (`Api/`, `Admin/`, `Api/V{N}/`); domain nests *inside* that axis (`Api/V1/Billing/InvoiceController.php`) — see `app/Http/Controllers/CLAUDE.md`.
+- **Factories** resolve from the model namespace, so a domain-namespaced model looks up `Database\Factories\Billing\InvoiceFactory` — mirror the subfolder (see `database/factories/CLAUDE.md`).
+- **Migrations are the exception — keep them flat** (timestamp-ordered anonymous classes, not PSR-4; `migrate` ignores subfolders) — see `database/migrations/CLAUDE.md`.
+- **Tests** mirror the domain path (`tests/Feature/Billing/InvoiceControllerTest.php`).
+
 ## Code style (cross-cutting)
 
 - **MUST** keep each method doing one thing. Extract a well-named `private`/`protected` helper instead of nesting conditionals or growing a method past one screen.

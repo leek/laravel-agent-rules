@@ -19,6 +19,16 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 final class Product extends Model {}
 ```
 
+## Domain sub-namespacing
+
+Factory resolution strips the model namespace and re-prefixes `Database\Factories\`, so a domain-namespaced model resolves to a matching subfolder:
+
+| Model                        | Resolved factory                              |
+| ---------------------------- | --------------------------------------------- |
+| `App\Models\Billing\Invoice` | `Database\Factories\Billing\InvoiceFactory`   |
+
+- **MUST** mirror the model's domain subfolder under `database/factories/` (or pin explicitly with `#[UseFactory(...)]`). A factory left at the flat path won't be found by `Invoice::factory()`. See domain sub-namespacing in `app/CLAUDE.md`.
+
 ## Create
 
 ```bash

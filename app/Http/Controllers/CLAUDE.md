@@ -24,6 +24,15 @@ app/Http/Controllers/Admin/UserController.php     // admin web
 app/Http/Controllers/Api/Admin/UserController.php // admin API
 ```
 
+- **MUST** nest the **domain** axis *inside* the audience/version axis when both apply — audience/version is matched to the route group, so it stays the outer segment:
+
+```
+app/Http/Controllers/Billing/InvoiceController.php        // web, Billing domain
+app/Http/Controllers/Api/V1/Billing/InvoiceController.php // API v1, Billing domain
+```
+
+See domain sub-namespacing (when to introduce domain folders) in `app/CLAUDE.md`.
+
 ## Create
 
 ```bash

@@ -9,6 +9,7 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 - **MUST** create a new migration for every schema change.
 - **MUST NOT** modify the database manually in any shared environment (staging, production). Local-only DBs may be reset freely.
 - **MUST NOT** edit a migration that has already been run in any shared environment — write a new migration instead.
+- **MUST** keep migration files **flat** in `database/migrations/` — do **not** group them into domain subfolders. They're timestamp-ordered anonymous classes (not PSR-4), and `migrate` globs the directory non-recursively, so files in subfolders are silently skipped. Domain sub-namespacing (`app/CLAUDE.md`) applies to `app/` class folders, not here.
 
 ## Pre-production vs. production
 
