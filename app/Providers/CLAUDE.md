@@ -10,9 +10,10 @@
 ## Rules
 
 - **MUST** bind interfaces to concrete implementations in `register()` — never in `boot()`.
-- **SHOULD** put side-effecting setup (Blade directives, validators, observers, view composers) in `boot()`.
+- **SHOULD** put side-effecting setup (Blade directives, validators, observers) in `boot()`.
 - **MUST NOT** resolve services from the container during `register()` — other providers may not be registered yet.
 - **SHOULD** prefer `bind` for per-resolve instances and `singleton` for shared state.
+- **AVOID** View Composers. Pass data explicitly from the controller/Action, or use a class-based component — both are clearer and more testable. Reach for a composer only when identical data must bind to many unrelated views and no other path fits.
 
 ## Example: interface → implementation
 

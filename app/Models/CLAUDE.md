@@ -9,8 +9,12 @@
 ## Rules
 
 - **MUST NOT** contain business logic — push to `app/Actions/` or `app/Support/`.
+- **MUST** prefer Eloquent over the Query Builder, and the Query Builder over raw SQL. Drop to `DB::table()` / `DB::raw()` only when Eloquent genuinely can't express the query — Eloquent gives casts, scopes, events, and soft deletes for free.
+- **PREFER** Laravel Collections over plain arrays for in-memory data manipulation (`map`/`filter`/`reduce`/`pluck` over `array_*` + loops).
+- **MUST NOT** redundantly set `$table`, `$primaryKey`, `$keyType`, `$incrementing`, `$connection`, `CREATED_AT`/`UPDATED_AT`, or explicit pivot / foreign-key names when Laravel's conventions already produce that exact value (convention over configuration). Configure only genuine exceptions — e.g. a `Pivot` subclass whose table isn't the singular default (see Gotchas).
 - **SHOULD** declare `$fillable` (or `$guarded = []` with care) — never leave mass-assignment unconfigured.
-- **SHOULD** declare casts for every column that is not a plain string/int (datetimes, enums, JSON, money objects). Use the `casts()` method (L11+) — see below.
+- **MUST** cast every date/time column via `casts()` (`'ordered_at' => 'datetime'`, or `'datetime:Y-m-d'` to pin a format) so it hydrates as a Carbon instance. **MUST NOT** store or pass dates as preformatted strings — keep Carbon objects throughout and format only in the display layer.
+- **SHOULD** declare casts for every other non-scalar column (enums, JSON, money / value objects). Use the `casts()` method (L11+) — see below.
 - **SHOULD** use enums for finite state columns (`status`, `role`, `tier`) rather than free-form strings.
 
 ## Create
@@ -107,6 +111,7 @@ final class Order extends Model
 ## Relationships
 
 - **MUST** type-hint return types on relation methods (`BelongsTo`, `HasMany`, `MorphTo`, etc.).
+- **MUST** name to-one relations singular (`owner`, `latestPost`) and to-many relations plural (`comments`, `roles`, `orderItems`).
 - **SHOULD** name `belongsTo` methods after the parent model singular (`owner()` → `User`).
 
 ## Query scopes — `#[Scope]` (L11+)
@@ -135,7 +140,7 @@ public function scopeOwnedBy(Builder $query, int $userId): Builder
 }
 ```
 
-**SHOULD** add a scope for any filter used in more than one place.
+**MUST** push reusable or multi-condition query logic into a scope / query object rather than leaving it inline in a controller or Action. Add a scope for any filter used in more than one place.
 
 ## Global scopes — `#[ScopedBy]` (L11+)
 

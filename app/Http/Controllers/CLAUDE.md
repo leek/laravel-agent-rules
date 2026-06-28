@@ -9,6 +9,10 @@
 ## Rules
 
 - **MUST** keep methods thin: validate (via FormRequest) → call Action/Support → return Response.
+- **MUST NOT** validate inline (`$request->validate([...])` / `Validator::make(...)`) — all input validation lives in a FormRequest.
+- **AVOID** building queries inline. Multi-clause `where()`/`join()`/aggregate chains belong in a model scope or query object (see `app/Models/CLAUDE.md`); the controller calls the scope/Action and returns the result.
+- **MUST** mass-assign validated data — `Model::create($request->validated())` or `$parent->relation()->create($request->validated())`. **MUST NOT** set attributes one-by-one from raw request input.
+- **MUST** eager-load (`with(...)`) every relation the response/view will touch — the controller owns N+1 prevention (see `app/Models/CLAUDE.md`).
 - **SHOULD** be a resource controller for CRUD endpoints.
 - **SHOULD** be an invokable controller (`__invoke`) for one-off single-action endpoints.
 - **MUST** namespace by audience when there are multiple variants:

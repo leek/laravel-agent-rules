@@ -2,6 +2,11 @@
 
 Default test framework: [Pest](https://pestphp.com/). PHPUnit-style works under the hood; new tests use Pest.
 
+## Database
+
+- **SHOULD** run the suite against an in-memory SQLite database (`DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:` in `phpunit.xml` / `.env.testing`) for fast, isolated tests.
+- **MUST** use the `RefreshDatabase` trait (or `DatabaseTransactions`) so each test starts from a clean schema.
+
 ## When to write tests
 
 - **MUST** write a test for every class that contains logic (Actions, Support, Jobs, Commands, Livewire components, Controllers, Policies).

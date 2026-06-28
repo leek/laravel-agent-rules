@@ -16,6 +16,7 @@
 
 ## Rules
 
+- **MUST NOT** put business logic in route files. A route maps a URL to a controller, invokable, or single-action class — **AVOID** closures that contain logic beyond a one-line delegation (route caching breaks on closures, too).
 - **MUST** keep URL segments lowercase and plural.
 - **MUST** give every route a name; use dot notation.
 - **MUST** group routes by entity, then nest middleware/prefix groups outside the entity group.

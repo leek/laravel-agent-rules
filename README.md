@@ -56,7 +56,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
-| `app/CLAUDE.md`                   | Cross-cutting code naming + class-type → directory index  |
+| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools), IoC/DI, constants & i18n, class-type → directory index |
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Enums/`                      | Backed enums: string backing, `casts()`, `Rule::enum()`, label methods |
 | `app/Casts/`                      | Custom Eloquent casts: value objects, `CastsAttributes`, inbound-only |
@@ -88,6 +88,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Providers/`                  | Container bindings (interface → implementation)           |
 | `config/`                         | `env()` / `config()` rules                                |
 | `routes/`                         | Routing, named routes, API versioning, scheduling (`routes/console.php`) |
+| `resources/views/`                | Blade views: kebab-case naming, no inline JS/CSS, `@json`/`data-*`, no queries in views, dates formatted in the display layer |
 | `resources/views/components/`     | Anonymous Blade components: `@props`, `$attributes`, `@class`/`@style`/`@pushOnce`/`@fragment` |
 | `database/`                       | Schema, keys, indexes, table/column naming                |
 | `database/migrations/`            | Migration workflow                                        |

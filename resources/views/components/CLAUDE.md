@@ -10,6 +10,7 @@
 ## Rules
 
 - **MUST** declare every consumed variable in `@props([...])` at the top of the file. Undeclared keys silently spill into `$attributes` and don't render where expected.
+- **MUST NOT** run queries or lazy-load relations inside a component — receive already eager-loaded data via props (see `resources/views/CLAUDE.md`).
 - **MUST** use `$attributes->merge(['class' => 'default'])` when forwarding HTML attributes. `merge` appends classes; for other attrs the caller's value wins.
 - **MUST** prefer `$attributes->class([...])` over manual string-building when applying conditional classes.
 - **SHOULD** use `@class([...])` / `@style([...])` directives for conditional classes/styles inside markup.
