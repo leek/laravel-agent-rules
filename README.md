@@ -60,6 +60,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Enums/`                      | Backed enums: string backing, `casts()`, `Rule::enum()`, label methods |
 | `app/Casts/`                      | Custom Eloquent casts: value objects, `CastsAttributes`, inbound-only |
+| `app/Data/`                       | DTOs: `{Verb}{Model}Data` naming, immutable, built at the boundary (`toDto()`), plain vs `spatie/laravel-data` |
 | `app/Http/Controllers/`           | Controller rules + audience namespacing                   |
 | `app/Http/Requests/`              | Form Request rules + `toDto()` pattern                    |
 | `app/Http/Resources/`             | API Resource pattern + paginated envelope                 |
@@ -75,6 +76,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Exceptions/`                 | Domain exceptions, static constructors, L11+ `withExceptions()` config |
 | `app/Observers/`                  | Observer rules + `#[ObservedBy]` attribute registration   |
 | `app/Events/`                     | Event + listener rules                                    |
+| `app/Broadcasting/`               | Channel authorization classes (`make:channel`), `channels.php` registration, presence vs private, `ShouldBroadcast` events |
 | `app/Listeners/`                  | `ShouldQueue` / `ShouldQueueAfterCommit`, auto-discovery, multi-method listeners |
 | `app/Jobs/`                       | Queue jobs: retries, afterCommit, unique/overlapping, batching, idempotency |
 | `app/Livewire/`                   | Auto-save, morphing, `wire:model.defer`, `#[Computed]`, `$queryString`, authorize-in-action |

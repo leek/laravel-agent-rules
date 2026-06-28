@@ -32,6 +32,7 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | ------------ | ------------------------------- |
 | Action       | `app/Actions/`                  |
 | Cast         | `app/Casts/`                    |
+| Channel      | `app/Broadcasting/`             |
 | Command      | `app/Console/Commands/`         |
 | Concern (Trait) | `app/Concerns/`              |
 | Contract (Interface) | `app/Contracts/`       |
@@ -60,7 +61,6 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 
 For class types without a dedicated CLAUDE.md, defaults:
 
-- **Data (DTO)** — `{SingularModel}Data` (e.g. `UserData`).
 - **Notification** — event-like, **no suffix** (e.g. `InvoicePaid`, `PasswordReset`).
 - **Policy** — `{SingularModel}Policy`.
 - **Provider** — `{Domain}Provider` (e.g. `PaymentProvider`).
