@@ -94,7 +94,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `database/migrations/`            | Migration workflow                                        |
 | `database/factories/`             | Factory rules                                             |
 | `database/seeders/`               | Seeder rules                                              |
-| `tests/`                          | Pest testing: datasets, Sanctum abilities, soft-delete asserts, allowlisted fakes |
+| `tests/`                          | Pest testing: architecture tests (`arch()`), datasets, Sanctum abilities, soft-delete asserts, allowlisted fakes |
 
 ## Versioning
 
