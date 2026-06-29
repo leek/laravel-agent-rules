@@ -4,7 +4,8 @@
 
 ## Naming
 
-- **MUST** be `{Domain}Provider` (e.g. `PaymentProvider`, `StorageProvider`, `EmailProvider`).
+- **MUST** be `{Domain}Provider` (e.g. `PaymentProvider`, `StorageProvider`, `EmailProvider`) for your own wiring providers.
+- Providers that a framework or package names by its own convention are **exempt** — e.g. Filament's `{PanelId}PanelProvider` (`AdminPanelProvider`) and `FilamentServiceProvider` (see `filament-agent-rules`).
 - App-wide wiring lives in the default `AppServiceProvider`.
 
 ## Rules

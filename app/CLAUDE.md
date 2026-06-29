@@ -67,6 +67,7 @@ app/Jobs/SyncInvoiceToErp.php   ShipOrder.php   EscalateTicket.php
 - **Controllers** already namespace by audience/version (`Api/`, `Admin/`, `Api/V{N}/`); domain nests *inside* that axis (`Api/V1/Billing/InvoiceController.php`) — see `app/Http/Controllers/CLAUDE.md`.
 - **Factories** resolve from the model namespace, so a domain-namespaced model looks up `Database\Factories\Billing\InvoiceFactory` — mirror the subfolder (see `database/factories/CLAUDE.md`).
 - **Migrations are the exception — keep them flat** (timestamp-ordered anonymous classes, not PSR-4; `migrate` ignores subfolders) — see `database/migrations/CLAUDE.md`.
+- **Filament resources are the other exception — group by model, not domain.** The layout is `app/Filament/Resources/{Models}/`; the domain axis there is a **Cluster** (`app/Filament/Clusters/{Domain}/Resources/...`), Filament's equivalent of domain sub-namespacing. Reuse the same domain name — `Billing/` here → a `Billing` cluster there. See `filament-agent-rules`.
 - **Tests** mirror the domain path (`tests/Feature/Billing/InvoiceControllerTest.php`).
 
 ## Code style (cross-cutting)
@@ -104,7 +105,7 @@ public function __construct(private readonly Mailer $mailer) {}
 ## Constants & strings
 
 - **MUST NOT** hard-code magic string/number literals for statuses, types, roles, or keys. Use an enum (`OrderStatus::Pending` — see `app/Enums/CLAUDE.md`) or a class constant (`Article::TYPE_NORMAL`).
-- **MUST** keep user-facing copy in translation files and read it via `__('app.article_added')` / `trans_choice(...)`. Never inline literal user-facing strings in PHP or Blade.
+- **MUST** keep user-facing copy in translation files and read it via `__('app.article_added')` / `trans_choice(...)`. Never inline literal user-facing strings in PHP or Blade. **Exception — Filament:** admin-panel component `->label()`s, modal headings, `Notification` titles, and enum `getLabel()` follow the Filament ruleset (inline by default; lifted to `__()` via a global `configureUsing` default when the panel is localized) — see `filament-agent-rules`.
 
 ## Class naming index
 
