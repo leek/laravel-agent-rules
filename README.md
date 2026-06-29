@@ -95,6 +95,9 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `database/factories/`             | Factory rules                                             |
 | `database/seeders/`               | Seeder rules                                              |
 | `tests/`                          | Pest testing: architecture tests (`arch()`), datasets, Sanctum abilities, soft-delete asserts, allowlisted fakes |
+| `tests/Architecture/`             | What belongs in `arch()` tests: structural-only, the naming/type/layering coverage matrix, `->ignoring()` discipline |
+| `tests/Feature/`                  | The default test type: full-stack HTTP/Livewire/console, allow+deny boundaries, fake external I/O, shape-not-strings |
+| `tests/Unit/`                     | Genuinely isolated logic only: no DB/HTTP/container, no `RefreshDatabase`, when NOT to use a unit test |
 
 ## Versioning
 
