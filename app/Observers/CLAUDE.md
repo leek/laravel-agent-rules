@@ -9,7 +9,9 @@
 ## Rules
 
 - **SHOULD** keep observer methods short — call into an Action when logic grows beyond a few lines.
-- **MUST** be aware that observers are **not triggered** by Eloquent mass updates (`Model::query()->update(...)`). Use individual updates or dispatch the effect manually when you need observer behaviour on a bulk update.
+- **MUST** be aware that observers are **not triggered** by Eloquent mass updates or deletes (`Model::query()->update(...)`, `Model::query()->delete(...)`). Use `chunkById()` and call `save()` / `delete()` on each model, or dispatch the effect manually when you need observer behaviour on bulk operations.
+- **MUST** guard side effects on updates with `isDirty()` in `updating` or `wasChanged()` in `updated`. Do not send notifications, delete files, or write activity logs on every update when only one field matters.
+- **SHOULD** put model-wide cleanup in `deleting` / `deleted` once instead of duplicating it in every controller, command, or action that can delete the model.
 
 > Use sparingly. Default home for new logic is an **Action** (`app/Actions/`).
 
@@ -55,5 +57,21 @@ public function creating(Order $order): void
 public function deleting(Order $order): void
 {
     $order->products()->delete();
+}
+
+public function updating(Album $album): void
+{
+    if ($album->isDirty('cover')) {
+        Storage::delete($album->getRawOriginal('cover'));
+    }
+}
+
+public function updated(SupportRequest $supportRequest): void
+{
+    if ($supportRequest->wasChanged('status')) {
+        $oldStatus = $supportRequest->getOriginal('status');
+
+        app(LogRequestStatusChangeAction::class)->run($supportRequest, $oldStatus);
+    }
 }
 ```

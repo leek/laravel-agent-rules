@@ -38,10 +38,15 @@ There is no `app/Exceptions/Handler.php` in L11+ skeletons. Reporting and render
         return response()->json(['message' => $e->getMessage()], 422);
     });
 
+    $exceptions->shouldRenderJsonWhen(
+        fn (Request $request, Throwable $e): bool => $request->is('api/*') || $request->expectsJson(),
+    );
+
     $exceptions->dontReport(StaleStateException::class);
 })
 ```
 
+- **MUST** force JSON rendering for API routes with `shouldRenderJsonWhen(...)` so clients still receive JSON when they forget the `Accept: application/json` header.
 - **PREFER** `report()` / `render()` methods on the exception class itself when the behaviour belongs to that exception — keeps `bootstrap/app.php` small.
 - **PREFER** marking never-reported exceptions with the `ShouldntReport` interface on the class over a `dontReport()` list in bootstrap.
 

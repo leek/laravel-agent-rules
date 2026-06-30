@@ -119,15 +119,15 @@ User::factory()->hasRoles(1, ['name' => 'Editor'])->create();
 
 ## Custom state methods
 
-**SHOULD** add a state method to the factory when the same combination of overrides is reused in multiple tests:
+**SHOULD** add a state method to the factory when the same combination of overrides is reused in multiple tests, or when the state name makes tests read in business language (`published()`, `expired()`, `trialing()`) instead of raw column setup:
 
 ```php
-public function github(array $attributes = []): self
+public function published(): self
 {
     return $this->state([
-        'platform'     => 'github',
-        'email'        => $attributes['email'] ?? fake()->email(),
-        'access_token' => $attributes['token'] ?? Str::random(),
+        'status' => JobStatus::Published,
+        'published_at' => now(),
+        'deadline' => now()->addMonth(),
     ]);
 }
 ```
@@ -135,7 +135,7 @@ public function github(array $attributes = []): self
 Usage:
 
 ```php
-Client::factory()->github()->create();
+JobListing::factory()->published()->create();
 ```
 
 ## Callbacks

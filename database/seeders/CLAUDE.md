@@ -10,6 +10,7 @@
 
 - **SHOULD** call factories rather than insert raw rows.
 - **SHOULD** use the `WithoutModelEvents` trait when seeders should not trigger observers (e.g. avoid sending welcome emails during a `db:seed`).
+- **PREFER** a trusted SQL fixture file with `DB::unprepared()` when importing a legacy export or large static reference dataset would be clearer than translating thousands of inserts to PHP. Keep the SQL under `database/seeders/sql/` and never run user-supplied SQL.
 
 ## Create
 

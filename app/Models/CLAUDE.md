@@ -10,6 +10,7 @@
 
 - **MUST NOT** contain business logic — push to `app/Actions/` or `app/Support/`.
 - **MUST** prefer Eloquent over the Query Builder, and the Query Builder over raw SQL. Drop to `DB::table()` / `DB::raw()` only when Eloquent genuinely can't express the query — Eloquent gives casts, scopes, events, and soft deletes for free.
+- **MUST** remember that `DB::table()` bypasses Eloquent soft-delete scopes, casts, accessors, model events, and observers. If you drop to the Query Builder for a soft-deletable table, manually add `whereNull('deleted_at')` or document why trashed rows are included.
 - **PREFER** Laravel Collections over plain arrays for in-memory data manipulation (`map`/`filter`/`reduce`/`pluck` over `array_*` + loops).
 - **MUST NOT** redundantly set `$table`, `$primaryKey`, `$keyType`, `$incrementing`, `$connection`, `CREATED_AT`/`UPDATED_AT`, or explicit pivot / foreign-key names when Laravel's conventions already produce that exact value (convention over configuration). Configure only genuine exceptions — e.g. a `Pivot` subclass whose table isn't the singular default (see Gotchas).
 - **SHOULD** declare `$fillable` (or `$guarded = []` with care) — never leave mass-assignment unconfigured.
@@ -113,6 +114,9 @@ final class Order extends Model
 - **MUST** type-hint return types on relation methods (`BelongsTo`, `HasMany`, `MorphTo`, etc.).
 - **MUST** name to-one relations singular (`owner`, `latestPost`) and to-many relations plural (`comments`, `roles`, `orderItems`).
 - **SHOULD** name `belongsTo` methods after the parent model singular (`owner()` → `User`).
+- **MUST** name role-specific relationships after the role, not the target model, when the foreign key carries domain meaning (`inviter()` for `invited_by`, `approver()` for `approved_by`, not another vague `user()`).
+- **PREFER** relationship-aware writes over manual foreign keys: `$team->members()->create($data)` instead of `Member::create(['team_id' => $team->id] + $data)`. The relationship call keeps ownership, events, and future relation constraints in one place.
+- **SHOULD** add custom relationship methods for reusable filtered/sorted subsets (`completedOrders()`, `activeSubscriptions()`) rather than repeating the same `where()` chain in controllers.
 
 ## Query scopes — `#[Scope]` (L11+)
 
@@ -141,6 +145,24 @@ public function scopeOwnedBy(Builder $query, int $userId): Builder
 ```
 
 **MUST** push reusable or multi-condition query logic into a scope / query object rather than leaving it inline in a controller or Action. Add a scope for any filter used in more than one place.
+
+### Query expression rules
+
+- **MUST** group `orWhere()` clauses inside a closure before chaining additional filters; otherwise SQL precedence turns `a OR b AND c` into a different query than `(a OR b) AND c`.
+- **PREFER** relationship helpers over manual foreign-key predicates: `whereBelongsTo($user)`, `whereRelation(...)`, `whereHasMorph(...)`. They read as model relationships and avoid hard-coded `*_id` / morph-type branches.
+- **MUST** whitelist user-selected SQL fragments (sorts, aggregates, report dimensions) with an enum or explicit map before using `selectRaw()` / `orderByRaw()`. Never concatenate request strings into SQL.
+- **SHOULD** select only needed columns when eager-loading large relations: `with('reviews:id,product_id,rating,text')`. Always include the related model's primary key and the foreign key needed to match it back to the parent.
+
+```php
+Email::query()
+    ->where(function (Builder $query) use ($search): void {
+        $query
+            ->where('subject', 'like', "%{$search}%")
+            ->orWhere('body', 'like', "%{$search}%");
+    })
+    ->where('active', true)
+    ->get();
+```
 
 ## Global scopes — `#[ScopedBy]` (L11+)
 
@@ -239,6 +261,17 @@ Wrap multi-step writes in a transaction:
 DB::transaction(function (): void {
     $order->update(['status' => 'paid']);
     $order->items()->update(['paid_at' => now()]);
+});
+```
+
+When the caller needs a created/updated model from the transaction, **PREFER** returning it from the transaction closure over mutating outer scope:
+
+```php
+$post = DB::transaction(function () use ($data): Post {
+    $post = Post::query()->create($data);
+    $post->tags()->sync($data['tags']);
+
+    return $post;
 });
 ```
 

@@ -24,6 +24,7 @@
 - **SHOULD** use route-model binding (`/users/{user}`) over manual lookups.
 - **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship and prevents cross-tenant access.
 - **MUST** use a single parameter name that matches the bound model (`{conversation}` resolves to `Conversation`). Reusing a different name silently resolves to `null`.
+- **MUST** constrain free-form route parameters at the route boundary. Prefer typed helpers (`whereNumber()`, `whereUuid()`, `whereAlpha()`, `whereAlphaNumeric()`, `whereIn()`) over regex when they express the rule; invalid values should 404 before the controller runs.
 
 ## Example
 
@@ -46,6 +47,19 @@ Route::prefix('/admin')
         Route::resource('users', UserController::class);
         Route::resource('orders', OrderController::class);
     });
+```
+
+## Parameter constraints
+
+```php
+Route::get('/users/{user}', [UserController::class, 'show'])
+    ->whereNumber('user')
+    ->name('users.show');
+
+Route::get('/docs/{locale}/{page}', [DocumentationController::class, 'show'])
+    ->whereIn('locale', ['en', 'es', 'de'])
+    ->whereAlphaNumeric('page')
+    ->name('docs.show');
 ```
 
 ## Scoped nested routes

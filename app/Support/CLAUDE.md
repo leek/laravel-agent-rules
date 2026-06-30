@@ -29,7 +29,15 @@ Generic caching rules. Apply wherever cache is touched — Support classes are a
 
 - **MUST** use a structured key: `{entity}:{id}:{aspect}` (e.g. `user:42:profile`, `post:99:render`).
 - **MUST** prefix with a schema version when the cached payload's shape changes (e.g. `v2:user:42:profile`). Bumping the version invalidates the whole namespace without a manual flush.
+- **MUST** keep shared cache keys behind one named constant or method on the owning model / Support class when the key is used for both read and invalidation. Duplicating string literals in `remember()` and `forget()` creates silent stale-cache bugs.
 - **AVOID** dynamic, hard-to-invalidate keys (`user:42:posts:filtered:` + serialized filters) — prefer cache tags or fine-grained per-row caching.
+
+```php
+final class Product extends Model
+{
+    public const NAV_BADGE_CACHE_KEY = 'products:navigation_badge_count';
+}
+```
 
 ## Stale-while-revalidate — `Cache::flexible`
 
@@ -64,6 +72,24 @@ For values computed many times in a single request, **PREFER** `Cache::memo` ove
 $user = Cache::memo()->remember("user:{$id}", 60, fn () => User::find($id));
 ```
 
+## Short-lived repeat guards
+
+For repeat detection inside a short time window (page views, QR scans, resend buttons), **PREFER** a short-lived cache key over a database existence query. The key should include every identity dimension that defines "same" and expire automatically.
+
+```php
+$key = "qr_scan:{$property->id}:{$request->ip()}";
+
+if (Cache::has($key)) {
+    return;
+}
+
+Cache::put($key, true, now()->addMinutes(30));
+```
+
+## Environment-aware caching
+
+For cache around developer-edited content (translations, markdown, config-driven UI), **SHOULD** bypass long-lived caching in `local` and use the real cache policy in production. Local freshness beats debugging phantom stale data; production still gets the performance win.
+
 ## Tags
 
 `Cache::tags(['posts', "user:{$id}"])->...` — **only works on `redis` and `memcached` drivers**. Don't use with `database` / `file` / `array` stores.
@@ -85,4 +111,3 @@ public function saved(Post $post): void
     Cache::tags(["user:{$post->user_id}"])->flush();
 }
 ```
-

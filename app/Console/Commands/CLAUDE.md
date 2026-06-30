@@ -12,6 +12,7 @@
 - **MUST** set `$description` to something useful — it appears in `php artisan list`.
 - **MUST** return `Command::SUCCESS` / `Command::FAILURE` / `Command::INVALID` explicitly.
 - **SHOULD** delegate work to an Action; the command parses arguments and reports.
+- **SHOULD** use `Validator::make(...)` for complex option / argument / prompt validation instead of hand-written `if` trees. Print validation errors and return `Command::INVALID`.
 
 ## Create
 

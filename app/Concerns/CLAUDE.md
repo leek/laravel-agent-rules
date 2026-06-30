@@ -8,7 +8,7 @@
 
 ## Rules
 
-- **SHOULD** exist only when behaviour is reused across 2+ classes; for a single host, inline the code instead.
+- **SHOULD** exist only when behaviour is reused across 3+ classes. Two uses can stay inline until the abstraction proves stable; for a single host, inline the code instead.
 - **MUST** keep one capability per trait — **AVOID** grab-bag traits.
 - **SHOULD** avoid trait state; when the host must supply data, declare it as an `abstract` method so a missing contract fails loudly at compile time, not silently at runtime.
 - **SHOULD** use Eloquent's `boot{TraitName}()` / `initialize{TraitName}()` hooks rather than overriding the host's `boot()` — the framework calls them automatically.

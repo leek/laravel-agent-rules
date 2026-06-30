@@ -5,7 +5,7 @@ Default test framework: [Pest](https://pestphp.com/). PHPUnit-style works under 
 ## Database
 
 - **SHOULD** run the suite against an in-memory SQLite database (`DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:` in `phpunit.xml` / `.env.testing`) for fast, isolated tests.
-- **MUST** use the `RefreshDatabase` trait (or `DatabaseTransactions`) so each test starts from a clean schema.
+- **MUST** use `LazilyRefreshDatabase`, `RefreshDatabase`, or `DatabaseTransactions` so each database-using test starts from a clean schema. **PREFER** `LazilyRefreshDatabase` in `tests/Pest.php` for Pest suites because tests that never touch the database avoid needless migration work.
 
 ## When to write tests
 

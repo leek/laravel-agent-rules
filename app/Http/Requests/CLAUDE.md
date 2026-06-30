@@ -38,10 +38,15 @@ protected function prepareForValidation(): void
 - **`'sometimes'`** — apply remaining rules only if the field is present.
 - **`'bail'`** as the first rule — stop on first failure (avoid expensive checks running after a cheap one already failed).
 - **`'required_if:type,company'`** / **`'exclude_if:type,individual'`** / **`'prohibited_if'`** — keep conditional dependencies in the rule definition, not in PHP `if`s.
+- **MUST** scope `exists` / `unique` rules to the authenticated tenant, owner, or parent record when the value must belong to that boundary. Global scopes and policies do not automatically protect validation lookups.
 
 ```php
 'tax_id' => ['required_if:type,company', 'nullable', 'string'],
 'email'  => ['bail', 'required', 'email:rfc,dns'],
+'vessel_id' => [
+    'required',
+    Rule::exists('vessels', 'id')->where('company_id', $this->user()->company_id),
+],
 ```
 
 ## Enums — `Rule::enum`
@@ -99,6 +104,17 @@ public function rules(): array
         'slug' => ['required', 'string', Rule::unique('posts', 'slug')->ignore($this->route('post'))],
     ];
 }
+```
+
+When uniqueness must hold across more than one table, **SHOULD** stack multiple `Rule::unique()` rules and provide one domain message:
+
+```php
+'email' => [
+    'required',
+    'email:rfc,dns',
+    Rule::unique(User::class, 'email')->ignore($this->user()),
+    Rule::unique(Invitation::class, 'email'),
+],
 ```
 
 ## Example with `toDto()`
