@@ -17,7 +17,7 @@ npx apply-agent-rules apply leek/laravel-agent-rules
 npx apply-agent-rules apply leek/laravel-agent-rules --agents claude,codex
 
 # Pin to a release tag
-npx apply-agent-rules apply leek/laravel-agent-rules@v0.13.0 --agents claude
+npx apply-agent-rules apply leek/laravel-agent-rules@v0.14.0 --agents claude
 
 # Re-pull later, preserving local edits and pruning removed files
 npx apply-agent-rules update
@@ -101,7 +101,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 
 ## Versioning
 
-Releases are tagged. Pin with `leek/laravel-agent-rules@v0.13.0` if you want reproducible installs.
+Releases are tagged. Pin with `leek/laravel-agent-rules@v0.14.0` if you want reproducible installs.
 
 ## License
 

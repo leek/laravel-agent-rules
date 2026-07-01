@@ -4,7 +4,8 @@
 
 ## Naming
 
-- **MUST** be `{SingularModel}Observer` (e.g. `UserObserver`, `ProductObserver`).
+- **MUST** be `{SingularModel}Observer` (e.g. `UserObserver`, `ProductObserver`) for a model's single observer.
+- **MAY** split a model's observers by concern as `{SingularModel}{Concern}Observer` when one model has several distinct, independently registered lifecycle responsibilities that would otherwise bloat a single class. Each observer is registered independently via `#[ObservedBy]` or `Model::observe(...)` and owns one concern. Keep the `{Model}` prefix and the `Observer` suffix.
 
 ## Rules
 
