@@ -3,6 +3,7 @@
 ## Naming
 
 - **MUST** be event-like, **no suffix** (e.g. `InvoicePaid`, `OrderShipped`, `PasswordReset`).
+- **MUST NOT** use a `Mail` / `Mailable` suffix — those names belong to `app/Mail/` classes. Prefer a Notification for "tell this user something happened"; reach for a `*Mail` mailable only for non-user recipients or bespoke single-channel mail — see `app/Mail/CLAUDE.md`.
 
 ## Channels
 
@@ -50,8 +51,8 @@ public function shouldSend(object $notifiable, string $channel): bool
 
 ## Bulk send
 
-- **MUST NOT** loop `$user->notify(...)` over a collection — issues one queue job per user.
-- **MUST** use `Notification::send($users, new InvoicePaid($invoice))` for bulk dispatch.
+- **PREFER** `Notification::send($users, new InvoicePaid($invoice))` (or `sendNow`) over a hand-rolled loop — clearer and keeps Laravel's notification pipeline in one place.
+- For `ShouldQueue` notifications, Laravel still enqueues **one job per notifiable** either way; `send` is not a bulk-performance optimization.
 
 ## On-demand notifications
 
@@ -67,6 +68,7 @@ Notification::route('mail', 'ops@example.com')
 
 - **MUST** return only JSON-serializable scalars / arrays. Do NOT include model instances — the payload is stored raw in the `notifications` table.
 - **SHOULD** include the model id + the data needed for the UI; rehydrate the model at read time if more is needed.
+- **MUST** use `__()` for any user-facing copy inside mail/database/broadcast content methods — see `app/CLAUDE.md`.
 
 ## Custom channels
 

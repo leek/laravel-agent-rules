@@ -2,6 +2,16 @@
 
 Directory-scoped agent rules for Laravel projects. Each `CLAUDE.md` lives next to the code it governs and mirrors the [laravel/laravel](https://github.com/laravel/laravel) skeleton — agents pick up the rules for whatever file you're editing.
 
+## Requirements
+
+- **Laravel 11+** (bootstrap `withMiddleware` / `withExceptions`, attribute model wiring, `casts()` method, schedule in `routes/console.php`). Older apps need adaptation.
+- **Pest** for new tests (`tests/CLAUDE.md`). PHPUnit-style assertions still work under Pest.
+- **Optional package dirs** — install rules only matter when the package is present:
+  - `app/Livewire/` — Livewire 4
+  - `app/Features/` — `laravel/pennant` (skip banner in file)
+  - `app/States/` — `spatie/laravel-model-states` (skip banner in file)
+- Companion rulesets (not in this repo): Filament → `filament-agent-rules`.
+
 ## Install
 
 Use [apply-agent-rules](https://github.com/leek/apply-agent-rules) to drop the rules into a Laravel project:
@@ -17,7 +27,7 @@ npx apply-agent-rules apply leek/laravel-agent-rules
 npx apply-agent-rules apply leek/laravel-agent-rules --agents claude,codex
 
 # Pin to a release tag
-npx apply-agent-rules apply leek/laravel-agent-rules@v0.14.0 --agents claude
+npx apply-agent-rules apply leek/laravel-agent-rules@v0.15.0 --agents claude
 
 # Re-pull later, preserving local edits and pruning removed files
 npx apply-agent-rules update
@@ -56,14 +66,14 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
-| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools), IoC/DI, constants & i18n, domain sub-namespacing, class-type → directory index |
+| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools, prefer `final`), IoC/DI, constants & i18n, security bullets, domain sub-namespacing, class-type → directory index |
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Enums/`                      | Backed enums: string backing, `casts()`, `Rule::enum()`, label methods |
 | `app/Casts/`                      | Custom Eloquent casts: value objects, `CastsAttributes`, inbound-only |
 | `app/Data/`                       | DTOs: `{Verb}{Model}Data` naming, immutable, built at the boundary (`toDto()`), plain vs `spatie/laravel-data` |
 | `app/Http/Controllers/`           | Controller rules + audience/domain namespacing            |
 | `app/Http/Requests/`              | Form Request rules + `toDto()` pattern                    |
-| `app/Http/Resources/`             | API Resource pattern + paginated envelope                 |
+| `app/Http/Resources/`             | API Resources: conditional fields, Laravel pagination preferred, optional project envelope |
 | `app/Http/Middleware/`            | Middleware rules: terminate, variadic params, bootstrap registration |
 | `app/Policies/`                   | Policy auto-discovery, `before()` fall-through, `Response::deny*` helpers |
 | `app/Rules/`                      | Custom `ValidationRule` classes vs closure rules vs FormRequest `after()` |
@@ -75,13 +85,13 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/States/`                     | State machines (`spatie/laravel-model-states`): transition graph, guarded transitions |
 | `app/Exceptions/`                 | Domain exceptions, static constructors, L11+ `withExceptions()` config |
 | `app/Observers/`                  | Observer rules + `#[ObservedBy]` attribute registration   |
-| `app/Events/`                     | Event + listener rules                                    |
+| `app/Events/`                     | Event rules (`ShouldDispatchAfterCommit`); listeners in `app/Listeners/` |
 | `app/Broadcasting/`               | Channel authorization classes (`make:channel`), `channels.php` registration, presence vs private, `ShouldBroadcast` events |
 | `app/Listeners/`                  | `ShouldQueue` / `ShouldQueueAfterCommit`, auto-discovery, multi-method listeners |
 | `app/Jobs/`                       | Queue jobs: retries, afterCommit, unique/overlapping, batching, idempotency |
 | `app/Livewire/`                   | Livewire 4: auto-save, morphing, deferred `wire:model` (`.live`/`.live.blur`), `#[Computed]`, `#[Url]`, authorize-in-action |
 | `app/Notifications/`              | Channels, `viaQueues`, `shouldSend`, bulk send, on-demand routing, custom channels |
-| `app/Mail/`                       | Mailables: envelope/content API, markdown, queueing, Mailable vs Notification |
+| `app/Mail/`                       | Mailables (`*Mail` suffix): envelope/content API, markdown, queueing vs Notification |
 | `app/Features/`                   | Feature flags with Laravel Pennant (closure + class features, rollouts, cleanup) |
 | `app/View/Components/`            | Class-based Blade components                              |
 | `app/Console/Commands/`           | Artisan command rules                                     |
@@ -99,9 +109,17 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `tests/Feature/`                  | The default test type: full-stack HTTP/Livewire/console, allow+deny boundaries, fake external I/O, shape-not-strings |
 | `tests/Unit/`                     | Genuinely isolated logic only: no DB/HTTP/container, no `RefreshDatabase`, when NOT to use a unit test |
 
+## Verify (maintainers)
+
+Structural acceptance checks for this ruleset:
+
+```bash
+./scripts/verify-rules.sh
+```
+
 ## Versioning
 
-Releases are tagged. Pin with `leek/laravel-agent-rules@v0.14.0` if you want reproducible installs.
+Releases are tagged. Pin with `leek/laravel-agent-rules@v0.15.0` if you want reproducible installs.
 
 ## License
 

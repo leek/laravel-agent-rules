@@ -42,6 +42,7 @@ arch('observers')->expect('App\Observers')->toHaveSuffix('Observer');
 arch('services')->expect('App\Services')->toHaveSuffix('Service');
 arch('data')->expect('App\Data')->toHaveSuffix('Data');
 arch('channels')->expect('App\Broadcasting')->toHaveSuffix('Channel');
+arch('mailables')->expect('App\Mail')->toHaveSuffix('Mail');
 ```
 
 **Naming — forbidden suffix/prefix:**

@@ -28,7 +28,7 @@ final class ValidPhoneNumber implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! preg_match('/^\+?[1-9]\d{1,14}$/', (string) $value)) {
-            $fail('The :attribute must be a valid E.164 phone number.');
+            $fail(__('validation.phone_e164'));
         }
     }
 }

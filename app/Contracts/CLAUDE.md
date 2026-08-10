@@ -34,7 +34,7 @@ interface PaymentGateway
 public function __construct(private PaymentGateway $gateway) {}
 
 // AppServiceProvider::register()
-$this->app->bind(PaymentGateway::class, StripeGateway::class);
+$this->app->bind(PaymentGateway::class, StripeService::class);
 ```
 
 ## Create

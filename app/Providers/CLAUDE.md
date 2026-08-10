@@ -25,16 +25,18 @@ These belong in `AppServiceProvider::boot()` unless a package documents a differ
 
 ## Example: interface → implementation
 
+Bind a real seam (external system, swappable capability) — not a repository-per-model wrapper around Eloquent. See `app/Contracts/CLAUDE.md` and `app/Services/CLAUDE.md`.
+
 ```php
-use App\Repositories\EloquentOrderRepository;
-use App\Repositories\OrderRepository;
+use App\Contracts\PaymentGateway;
+use App\Services\StripeService;
 use Illuminate\Support\ServiceProvider;
 
 final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(OrderRepository::class, EloquentOrderRepository::class);
+        $this->app->bind(PaymentGateway::class, StripeService::class);
     }
 }
 ```

@@ -37,9 +37,16 @@ class CreateUserService
 }
 ```
 
-✅ Wraps an external system, cohesive multi-method surface:
+✅ Wraps an external system, cohesive multi-method surface (often bound to a contract in a provider):
 
 ```php
+final class StripeService implements PaymentGateway
+{
+    public function __construct(private readonly StripeClient $client) {}
+
+    public function charge(Money $amount, string $token): Charge { /* ... */ }
+}
+
 final class GeocodingService
 {
     public function __construct(private readonly GeocodeClient $client) {}

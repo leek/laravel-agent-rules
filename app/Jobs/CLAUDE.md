@@ -91,6 +91,8 @@ Redis::throttle('stripe')->allow(10)->every(60)->then(
 
 - **`Bus::batch([...])`** — parallel jobs needing aggregate completion (`then`/`catch`/`finally`).
 - **`Bus::chain([...])`** — ordered jobs where each depends on the previous.
+- **MUST** add the `Illuminate\Bus\Batchable` trait to jobs that run inside `Bus::batch([...])`.
+- Inside a batch job, guard with `if ($this->batch()?->cancelled()) return;` so cancelled batches stop cleanly.
 
 ```php
 Bus::batch([
@@ -101,6 +103,21 @@ Bus::batch([
 ->catch(fn (Batch $batch, Throwable $e) => report($e))
 ->allowFailures()
 ->dispatch();
+```
+
+```php
+final class ImportRowJob implements ShouldQueue
+{
+    use Batchable, Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
+
+    public function handle(): void
+    {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+        // ...
+    }
+}
 ```
 
 ## Conditional dispatch
@@ -164,26 +181,6 @@ if ($affected === 0) {
 }
 ```
 
-## Batching
-
-- **MUST** add the `Illuminate\Bus\Batchable` trait to jobs intended to run inside `Bus::batch([...])`.
-- Inside the job, guard with `if ($this->batch()?->cancelled()) return;` to bail out cleanly when the batch is cancelled.
-
-```php
-final class ImportRowJob implements ShouldQueue
-{
-    use Batchable, Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
-
-    public function handle(): void
-    {
-        if ($this->batch()?->cancelled()) {
-            return;
-        }
-        // ...
-    }
-}
-```
-
 ## Queue selection
 
 Reserve named queues for priority bands; dispatch with `->onQueue('high')`:
@@ -204,8 +201,27 @@ public function __construct(
 ) {}
 ```
 
-Class-wide form: add the `Illuminate\Queue\Attributes\WithoutRelations` attribute on the class, or `use SerializesModels;` with `protected $deleteWhenMissingModels = true;` to bail cleanly when the model has been deleted before the worker picks the job up.
+Class-wide form: put `#[WithoutRelations]` on the job class so every serialized model property is stripped of relations.
+
+This only controls what is stored in the payload. It does **not** decide what happens when the model row is gone at run time — see missing-model handling below.
 
 ## Missing-model handling — `#[DeleteWhenMissingModels]`
 
-Set `public bool $deleteWhenMissingModels = true;` (or annotate the class with `#[DeleteWhenMissingModels]` on queued listeners) so the job/listener is silently dropped if its serialized model row was deleted between dispatch and execution — instead of failing every retry with `ModelNotFoundException`.
+When the serialized model may be deleted between dispatch and execution, **MUST** drop the job instead of retrying forever on `ModelNotFoundException`:
+
+- Property / class: `public bool $deleteWhenMissingModels = true;` (jobs that `use SerializesModels`)
+- Attribute form (queued listeners and jobs): `#[DeleteWhenMissingModels]`
+
+```php
+use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
+
+#[DeleteWhenMissingModels]
+final class ProcessOrderJob implements ShouldQueue
+{
+    use Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
+
+    public function __construct(
+        #[WithoutRelations] public readonly Order $order,
+    ) {}
+}
+```

@@ -19,7 +19,7 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 ## When writing a migration
 
 - **MUST** declare migrations as **anonymous classes** (`return new class extends Migration { ... };`). Filename communicates intent; no named class needed.
-- **MUST** preserve column sorting. When adding a new column, use `after('existing_column')` or `before('existing_column')`.
+- **SHOULD** preserve column sorting on **MySQL/MariaDB** with `after('existing_column')` or `before('existing_column')`. Those modifiers are MySQL/MariaDB-only — omit them on Postgres, SQLite, and SQL Server (see `database/CLAUDE.md`).
 - **SHOULD** add `comment('...')` to any column whose name is not self-explanatory (legal/finance/regulatory terms, codes, project-specific jargon).
 - **SHOULD** declare an explicit `onDelete` policy on every foreign key (`cascade`, `restrict`, `set null`).
 - **MUST** make both `up()` and `down()` work, except where rollback is genuinely impossible (data migrations) — in that case, `down()` throws explicitly with a comment.
@@ -37,6 +37,8 @@ php artisan make:migration add_published_at_to_products_table
 
 ## Example — add column
 
+`after()` is MySQL/MariaDB-only — omit on Postgres/SQLite/SQL Server.
+
 ```php
 return new class extends Migration
 {
@@ -45,7 +47,7 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table): void {
             $table->timestamp('published_at')
                 ->nullable()
-                ->after('status')
+                ->after('status') // MySQL/MariaDB only
                 ->comment('Time the product became publicly visible.');
         });
     }

@@ -1,11 +1,11 @@
-# Events & Listeners
+# Events
 
 **Purpose:** fan-out notifications, broadcasting, decoupling cross-cutting side effects.
 
 ## Naming
 
-- **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Laravel core convention; matches Notifications and the examples throughout these rules.
-- Listeners live in `app/Listeners/`.
+- **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Laravel core convention; matches Notifications (also no suffix). Mailables use a `Mail` suffix instead — see `app/Mail/CLAUDE.md`.
+- Listeners live in `app/Listeners/` — see `app/Listeners/CLAUDE.md`.
 
 ## Rules
 

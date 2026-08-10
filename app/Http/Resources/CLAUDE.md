@@ -13,18 +13,6 @@
 - **MUST NOT** trigger queries inside `toArray()` (no N+1). Eager-load required relations in the controller / query object before passing the model to the resource.
 - **SHOULD** keep field selection explicit — return only the fields the consumer needs, not `$this->toArray()`.
 
-## Response envelope
-
-Use a consistent envelope across all API responses:
-
-```json
-{ "success": true, "data": ..., "error": null, "meta": ... }
-```
-
-- `data` — payload (object, array, or paginated collection items)
-- `meta` — pagination + counters (`page`, `per_page`, `total`)
-- `error` — `null` on success, error object on failure
-
 ## Create
 
 ```bash
@@ -53,19 +41,6 @@ return [
 ];
 ```
 
-## Global response meta — `with()`
-
-Inject fields into every response from a resource (API version, server time, deprecation notice) via `with(Request $request)`:
-
-```php
-public function with(Request $request): array
-{
-    return [
-        'api_version' => '2024-05',
-    ];
-}
-```
-
 ## Example
 
 ```php
@@ -83,7 +58,29 @@ final class ProjectResource extends JsonResource
 }
 ```
 
-## Paginated response
+## Pagination — Laravel default (preferred)
+
+**PREFER** Laravel's built-in resource pagination: pass the paginator to `Resource::collection(...)` and return it. Laravel wraps `data` + pagination `links` / `meta` for you.
+
+```php
+return ProjectResource::collection(
+    Project::query()->active()->paginate(25)
+);
+```
+
+Optional shared top-level keys (API version, deprecation) via `with(Request $request)` on the resource.
+
+## Project response envelope (optional convention)
+
+Some APIs adopt an explicit envelope such as:
+
+```json
+{ "success": true, "data": ..., "error": null, "meta": ... }
+```
+
+That shape is a **project API contract**, not Laravel's default Resource pagination. Use it only when the project's public API already (or deliberately) standardizes on it — document the contract once for the app and keep every endpoint consistent. Do **not** invent a custom envelope on top of Laravel Resources "because the rules said so."
+
+When the project *does* require that envelope, build it deliberately (often a thin response helper or base resource) and pin the shape in feature tests with `assertJsonStructure`. Example of a hand-rolled paginated envelope:
 
 ```php
 $projects = Project::query()->active()->paginate(25);

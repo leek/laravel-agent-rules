@@ -50,39 +50,6 @@ class ProductFactory extends Factory
 }
 ```
 
-## Common operations
-
-```php
-User::factory()->create();                     // single, persisted
-User::factory()->make();                       // single, in-memory only
-User::factory()->count(10)->create();          // many, persisted
-User::factory()->count(10)->make();            // many, in-memory only
-User::factory()->create(['email' => 'a@b.c']); // override attributes
-```
-
-## Sequences
-
-Use a `sequence()` when each row needs different attributes:
-
-```php
-Order::factory()
-    ->count(10)
-    ->sequence(
-        ['state' => 'new'],
-        ['state' => 'pending'],
-    )
-    ->create();
-```
-
-Callback form for derived values:
-
-```php
-Category::factory()
-    ->count(10)
-    ->sequence(fn (Sequence $sequence) => ['order_column' => $sequence->index])
-    ->create();
-```
-
 ## Recycle (shared relationship)
 
 **MUST** use `recycle()` when multiple nested factories share the same parent — otherwise each call creates a new parent row.
@@ -101,25 +68,9 @@ Product::factory()
     ->create();
 ```
 
-## Relationships
-
-```php
-User::factory()->has(Post::factory()->count(3))->create();  // explicit
-User::factory()->hasPosts(3)->create();                     // magic shortcut
-
-Post::factory()->count(3)->for(User::factory(['name' => 'A']))->create();
-Post::factory()->count(3)->forUser(['name' => 'A'])->create();
-
-User::factory()
-    ->hasAttached(Role::factory()->count(3), ['active' => true])
-    ->create();
-
-User::factory()->hasRoles(1, ['name' => 'Editor'])->create();
-```
-
 ## Custom state methods
 
-**SHOULD** add a state method to the factory when the same combination of overrides is reused in multiple tests, or when the state name makes tests read in business language (`published()`, `expired()`, `trialing()`) instead of raw column setup:
+**SHOULD** add a state method when the same combination of overrides is reused in multiple tests, or when the name reads in business language (`published()`, `expired()`, `trialing()`):
 
 ```php
 public function published(): self
@@ -132,15 +83,17 @@ public function published(): self
 }
 ```
 
-Usage:
-
 ```php
 JobListing::factory()->published()->create();
 ```
 
+## Sequences (when useful)
+
+Use `sequence()` when each row needs different attributes or a derived index value — see [Laravel factory docs](https://laravel.com/docs/eloquent-factories#sequences). Prefer a named state method when the combination is reused.
+
 ## Callbacks
 
-Use `configure()` for after-create / after-make side effects:
+Use `configure()` for after-create / after-make side effects only when the factory itself owns that setup (not business logic that belongs in an Action):
 
 ```php
 public function configure(): static

@@ -65,12 +65,27 @@ final class PostController extends Controller implements HasMiddleware
 
 ## Example
 
+Trivial CRUD needs no Action — validate → write → respond is enough (see the AVOID rule above). Reach for an Action when there is branching, side effects, reuse, or logic worth testing on its own.
+
 ```php
 public function store(StoreUserRequest $request): JsonResponse
 {
     $user = User::query()->create($request->validated());
 
     return response()->json($user);
+}
+```
+
+With an Action (non-trivial operation):
+
+```php
+public function store(StoreOrderRequest $request, CreateOrderAction $createOrder): JsonResponse
+{
+    $order = $createOrder->run($request->toDto());
+
+    return (new OrderResource($order))
+        ->response()
+        ->setStatusCode(201);
 }
 ```
 

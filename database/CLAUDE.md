@@ -44,7 +44,7 @@ Order columns top-to-bottom as:
 3. Domain columns, ordered by priority and **grouped by context**
 4. Native timestamps (`created_at`, `updated_at`, `deleted_at`)
 
-> When adding columns in later migrations, **MUST** use `after()` / `before()` to preserve this ordering.
+> When adding columns in later migrations on **MySQL/MariaDB**, **SHOULD** use `after()` / `before()` to preserve this ordering. Those modifiers are MySQL/MariaDB-only — Postgres, SQLite, and SQL Server do not support column positioning; omit them there.
 
 ## Frequently-used column names
 
@@ -57,9 +57,10 @@ To stay consistent across projects, **SHOULD** use:
 
 ## Indexes
 
-- **MUST** add an index to any column used in `WHERE`, `ORDER BY`, or `JOIN`.
-- **MUST** add a composite index when multiple columns are queried together.
-- **SHOULD** index every foreign key column (Laravel's `foreignId()` adds one automatically).
+- **MUST** index foreign keys (Laravel's `foreignId()` / `foreignIdFor()` adds one automatically) and columns that enforce uniqueness.
+- **SHOULD** add an index (or composite index) for filters, sorts, and joins that show up in real query paths — verify with `EXPLAIN` / slow-query logs rather than indexing every `WHERE`/`ORDER BY` column by habit.
+- **MUST** add a composite index when multiple columns are queried together as a unit (and order columns to match the query).
+- **AVOID** indexes on low-cardinality columns alone (booleans, small enums) unless they are part of a selective composite.
 - **AVOID** redundant single-column indexes that are already covered by a composite index's leading column.
 
 ## UUIDs

@@ -105,7 +105,21 @@ public function __construct(private readonly Mailer $mailer) {}
 ## Constants & strings
 
 - **MUST NOT** hard-code magic string/number literals for statuses, types, roles, or keys. Use an enum (`OrderStatus::Pending` — see `app/Enums/CLAUDE.md`) or a class constant (`Article::TYPE_NORMAL`).
-- **MUST** keep user-facing copy in translation files and read it via `__('app.article_added')` / `trans_choice(...)`. Never inline literal user-facing strings in PHP or Blade. **Exception — Filament:** admin-panel component `->label()`s, modal headings, `Notification` titles, and enum `getLabel()` follow the Filament ruleset (inline by default; lifted to `__()` via a global `configureUsing` default when the panel is localized) — see `filament-agent-rules`.
+- **MUST** keep user-facing copy in translation files and read it via `__('app.article_added')` / `trans_choice(...)`. Never inline literal user-facing strings in PHP or Blade. That includes enum/state `label()` methods, mailable subjects, notification lines, validation messages, and Blade text.
+- **Exception — Filament:** admin-panel component `->label()`s, modal headings, `Notification` titles, and enum `getLabel()` follow the Filament ruleset (inline by default; lifted to `__()` via a global `configureUsing` default when the panel is localized) — see `filament-agent-rules`.
+- **Exception — developer-only strings:** log messages, exception messages for internal failures, and Artisan `$description` / signatures may stay inline English.
+
+## Security (cross-cutting)
+
+- **MUST** authorize before acting — policies / `$this->authorize()` / route `->can(...)` before mutations or sensitive reads. Never trust a client-supplied id alone for ownership or tenancy.
+- **MUST** scope lookups to the authenticated boundary (tenant, owner, team) in queries and validation (`exists` / `unique` rules) — global scopes and policies do not automatically protect every query.
+- **MUST NOT** concatenate request input into SQL, shell commands, or raw cache/key fragments. Whitelist sorts, filters, and report dimensions with an enum or explicit map.
+- **MUST** read secrets only via `config(...)` (never `env()` outside `config/*.php`) — see `config/CLAUDE.md`.
+- **MUST NOT** mass-assign unvalidated request data; use Form Requests and `$fillable` / `$guarded` deliberately — see `app/Http/Requests/CLAUDE.md` and `app/Models/CLAUDE.md`.
+
+## Class shape
+
+- **PREFER** `final` on application classes (Actions, Jobs, DTOs, Support, Services, Policies, etc.) unless the class is intentionally designed for extension (abstract base, package seam, or framework subclass that docs require leaving open).
 
 ## Class naming index
 
@@ -136,16 +150,9 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Provider     | `app/Providers/`                |
 | Request      | `app/Http/Requests/`            |
 | Rule         | `app/Rules/`                    |
+| Scope        | co-located with model / query   |
 | Seeder       | `database/seeders/`             |
 | Service      | `app/Services/`                 |
 | State        | `app/States/`                   |
 | Support      | `app/Support/`                  |
 | Test         | `tests/`                        |
-
-For class types without a dedicated CLAUDE.md, defaults:
-
-- **Notification** — event-like, **no suffix** (e.g. `InvoicePaid`, `PasswordReset`).
-- **Policy** — `{SingularModel}Policy`.
-- **Provider** — `{Domain}Provider` (e.g. `PaymentProvider`).
-- **Rule** — rule meaning, **no suffix** (e.g. `ValidPhoneNumber`, `Uppercase`).
-- **Scope** — `{Adjective}Scope` (e.g. `ActiveScope`).

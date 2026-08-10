@@ -12,6 +12,7 @@
 - **SHOULD** delegate authorization to a Policy (`$this->user()?->can('create', Order::class) ?? false`) rather than inlining logic.
 - **SHOULD** keep validation rules colocated in `rules()`; do not validate ad-hoc in the controller.
 - **SHOULD** expose a `toDto()` method that returns a typed DTO when the action downstream expects structured input — keeps the action free of `$request->input(...)` calls.
+- **MUST** put user-facing validation messages through `__()` / lang files (or Laravel's default translated messages) — see `app/CLAUDE.md`.
 
 ## Create
 
@@ -21,7 +22,7 @@ php artisan make:request StoreUserRequest
 
 ## `prepareForValidation()` — normalize input
 
-Use to normalize or derive fields **before** rules run. Common cases: trim whitespace, lowercase emails, derive `slug` from `title`, coerce string booleans:
+Use to normalize or derive fields **before** rules run (trim, lowercase email, derive `slug` from `title`, coerce string booleans):
 
 ```php
 protected function prepareForValidation(): void
@@ -32,28 +33,18 @@ protected function prepareForValidation(): void
 }
 ```
 
-## Conditional and dynamic rules
+## Tenant-scoped and ownership-aware rules
 
-- **`Rule::when($condition, ['required', 'string'])`** — apply a rule chain only when a condition holds.
-- **`'sometimes'`** — apply remaining rules only if the field is present.
-- **`'bail'`** as the first rule — stop on first failure (avoid expensive checks running after a cheap one already failed).
-- **`'required_if:type,company'`** / **`'exclude_if:type,individual'`** / **`'prohibited_if'`** — keep conditional dependencies in the rule definition, not in PHP `if`s.
 - **MUST** scope `exists` / `unique` rules to the authenticated tenant, owner, or parent record when the value must belong to that boundary. Global scopes and policies do not automatically protect validation lookups.
 
 ```php
-'tax_id' => ['required_if:type,company', 'nullable', 'string'],
-'email'  => ['bail', 'required', 'email:rfc,dns'],
 'vessel_id' => [
     'required',
     Rule::exists('vessels', 'id')->where('company_id', $this->user()->company_id),
 ],
 ```
 
-## Enums — `Rule::enum`
-
-```php
-'status' => ['required', Rule::enum(Status::class)->only([Status::Active, Status::Pending])],
-```
+- Prefer built-in conditional rules (`sometimes`, `required_if`, `exclude_if`, `Rule::when`, `Rule::enum`) over PHP `if` trees in `rules()`. See [Laravel validation docs](https://laravel.com/docs/validation) for the full rule list.
 
 ## Cross-field validation — `after(): array`
 
@@ -65,21 +56,9 @@ public function after(): array
     return [
         function (Validator $validator): void {
             if ($this->date('start_at')->gte($this->date('end_at'))) {
-                $validator->errors()->add('end_at', 'End must be after start.');
+                $validator->errors()->add('end_at', __('validation.end_after_start'));
             }
         },
-    ];
-}
-```
-
-## Custom messages with array `:position`
-
-```php
-public function messages(): array
-{
-    return [
-        'items.*.product_id.exists' => 'Product #:position does not exist.',
-        'items.*.quantity.min'      => 'Item #:position must have at least :min unit(s).',
     ];
 }
 ```
@@ -98,15 +77,10 @@ $attributes = $request->safe()->merge(['created_by_id' => $request->user()->id])
 When validating uniqueness on update, **MUST** exempt the current row or every update fails:
 
 ```php
-public function rules(): array
-{
-    return [
-        'slug' => ['required', 'string', Rule::unique('posts', 'slug')->ignore($this->route('post'))],
-    ];
-}
+'slug' => ['required', 'string', Rule::unique('posts', 'slug')->ignore($this->route('post'))],
 ```
 
-When uniqueness must hold across more than one table, **SHOULD** stack multiple `Rule::unique()` rules and provide one domain message:
+When uniqueness must hold across more than one table, **SHOULD** stack multiple `Rule::unique()` rules and provide one domain message via `messages()` / `__()`:
 
 ```php
 'email' => [

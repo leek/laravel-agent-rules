@@ -1,8 +1,10 @@
 # Feature Flags (Pennant)
 
-**Purpose:** gradual rollouts, A/B variants, kill switches. Backed by `laravel/pennant`.
+> Targets `laravel/pennant`. **Skip this directory** if the project does not use Pennant — plain config toggles or remote flag services are fine without these rules.
 
-## Install
+**Purpose:** gradual rollouts, A/B variants, kill switches.
+
+## Setup
 
 ```bash
 composer require laravel/pennant

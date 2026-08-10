@@ -22,6 +22,7 @@ use Illuminate\Validation\Rule;
 
 - **PREFER** `tryFrom()` over `from()` for untrusted input — `from()` throws `ValueError`; `tryFrom()` returns `null`.
 - **SHOULD** put display concerns on the enum as small `match` methods (`label()`, `color()`), keeping the mapping exhaustive — `match` without a default arm fails loudly when a new case is added.
+- **MUST** return translated strings from user-facing `label()` (and similar) methods via `__()` — see `app/CLAUDE.md`.
 - **AVOID** business logic on enums beyond labels and simple predicates (`isFinal()`, `canTransitionTo()`); multi-step behaviour belongs in an Action.
 
 ```php
@@ -34,9 +35,9 @@ enum OrderStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending   => 'Pending',
-            self::Shipped   => 'Shipped',
-            self::Cancelled => 'Cancelled',
+            self::Pending   => __('orders.status.pending'),
+            self::Shipped   => __('orders.status.shipped'),
+            self::Cancelled => __('orders.status.cancelled'),
         };
     }
 

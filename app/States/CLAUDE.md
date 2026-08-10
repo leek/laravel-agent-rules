@@ -37,7 +37,10 @@ abstract class PatientState extends State
 
 final class NewState extends PatientState
 {
-    public function label(): string { return 'New'; }
+    public function label(): string
+    {
+        return __('patients.status.new');
+    }
 }
 ```
 
