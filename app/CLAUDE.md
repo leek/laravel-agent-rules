@@ -8,7 +8,7 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 
 | Entity         | Pattern                          | Examples                                            |
 | -------------- | -------------------------------- | --------------------------------------------------- |
-| Method         | `camelCase`                      | `store`, `massDestroy`, `run`                       |
+| Method         | `camelCase`                      | `store`, `massDestroy`, `handle`                    |
 | Model property | `snake_case`                     | `is_active`, `created_at`                           |
 | Class property | `camelCase`                      | `$isActive`, `$createdAt`                           |
 | Variable       | `camelCase`                      | `$isActive`, `$createdAt`                           |
@@ -89,7 +89,7 @@ app/Jobs/SyncInvoiceToErp.php   ShipOrder.php   EscalateTicket.php
 ❌ Hard-wired concrete — untestable:
 
 ```php
-public function run(array $data): User
+public function handle(array $data): User
 {
     $mailer = new MailgunMailer(config('services.mailgun.key'));
     // ...

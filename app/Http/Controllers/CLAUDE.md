@@ -81,7 +81,7 @@ With an Action (non-trivial operation):
 ```php
 public function store(StoreOrderRequest $request, CreateOrderAction $createOrder): JsonResponse
 {
-    $order = $createOrder->run($request->toDto());
+    $order = $createOrder->handle($request->toDto());
 
     return (new OrderResource($order))
         ->response()

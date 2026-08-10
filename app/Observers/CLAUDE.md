@@ -72,7 +72,7 @@ public function updated(SupportRequest $supportRequest): void
     if ($supportRequest->wasChanged('status')) {
         $oldStatus = $supportRequest->getOriginal('status');
 
-        app(LogRequestStatusChangeAction::class)->run($supportRequest, $oldStatus);
+        app(LogRequestStatusChangeAction::class)->handle($supportRequest, $oldStatus);
     }
 }
 ```

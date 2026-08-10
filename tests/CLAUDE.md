@@ -131,7 +131,7 @@ Http::fake([
     'google.com/*' => Http::response('foo@gmail.com', 200),
 ]);
 
-$response = resolve(FetchGoogleUserEmailAction::class)->run();
+$response = resolve(FetchGoogleUserEmailAction::class)->handle();
 
 expect($response)->toBe('foo@gmail.com');
 ```
@@ -158,5 +158,5 @@ Static files used as test input (XML payloads, JSON snapshots, sample uploads).
 ```php
 $payment = base_path('tests/fixtures/payment.xml');
 
-app(ProcessPaymentAction::class)->run($payment, /* ... */);
+app(ProcessPaymentAction::class)->handle($payment, /* ... */);
 ```

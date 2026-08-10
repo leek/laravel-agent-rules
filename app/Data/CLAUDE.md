@@ -39,7 +39,7 @@ final readonly class CreateOrderData
 Consumed by an Action without any knowledge of HTTP:
 
 ```php
-public function run(CreateOrderData $data): Order { /* ... */ }
+public function handle(CreateOrderData $data): Order { /* ... */ }
 ```
 
 ## `spatie/laravel-data` variant

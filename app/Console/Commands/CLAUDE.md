@@ -30,7 +30,7 @@ final class FetchUsersCommand extends Command
 
     public function handle(FetchUsersAction $action): int
     {
-        $action->run($this->option('since'));
+        $action->handle($this->option('since'));
 
         return self::SUCCESS;
     }
