@@ -117,6 +117,10 @@ public function __construct(private readonly Mailer $mailer) {}
 - **MUST** read secrets only via `config(...)` (never `env()` outside `config/*.php`) — see `config/CLAUDE.md`.
 - **MUST NOT** mass-assign unvalidated request data; use Form Requests and `$fillable` / `$guarded` deliberately — see `app/Http/Requests/CLAUDE.md` and `app/Models/CLAUDE.md`.
 
+## Caching
+
+Cache keys, `Cache::flexible` / locks / memo, tags, null results, and invalidation live in **`app/Support/CLAUDE.md`** — apply those rules at every call site (Jobs, Models, Actions), not only under Support classes.
+
 ## Class shape
 
 - **PREFER** `final` on application classes (Actions, Jobs, DTOs, Support, Services, Policies, etc.) unless the class is intentionally designed for extension (abstract base, package seam, or framework subclass that docs require leaving open).

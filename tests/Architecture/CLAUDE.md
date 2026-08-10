@@ -96,7 +96,10 @@ arch('no debug leftovers')
     ->not->toBeUsed();
 
 // config/CLAUDE.md — env() only inside config/*.php
-arch('no env outside config')->expect('env')->not->toBeUsed();
+arch('no env outside config')
+    ->expect('env')
+    ->not->toBeUsed()
+    ->ignoring('config');
 ```
 
 ## When the rule isn't statically checkable

@@ -82,6 +82,7 @@ public function update(User $user, Post $post): Response
 
 - **MUST NOT** inline ad-hoc checks (`if (auth()->id() !== $post->user_id) abort(403);`) — funnel through a policy.
 - **MUST** prefer route-level `->can('update', 'post')` middleware over a repeated `$this->authorize(...)` inside the controller action.
+- For abilities that are **not** model-bound (e.g. `view-horizon`, `access-billing`), **SHOULD** define them once with `Gate::define('view-horizon', ...)` in a provider and authorize with `$this->authorize('view-horizon')` / `->can('view-horizon')` — same as policies, not ad-hoc `if` trees.
 - **SHOULD** test denial paths, not just allow paths.
 - **Auth boundary:** session web routes use `auth` + policies/`->can(...)`. Token API routes use Sanctum (`auth:sanctum`) and **MUST** assert abilities on ability-scoped endpoints (grant + deny) — see `tests/CLAUDE.md` and `tests/Feature/CLAUDE.md`. Never treat a bare authenticated user as authorized for every ability.
 

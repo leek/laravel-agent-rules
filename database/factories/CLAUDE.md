@@ -10,13 +10,17 @@
 
 - **MUST** define every required column in `definition()`.
 - **SHOULD** use related factories for foreign keys (`'category_id' => Category::factory()`).
-- **PREFER** `#[UseFactory]` on the model over the legacy `HasFactory::newFactory()` override / naming convention.
+- Models still need the `HasFactory` trait for `Model::factory()` — see `app/Models/CLAUDE.md`. **PREFER** `#[UseFactory]` only when pinning a non-conventional factory class (instead of overriding `newFactory()`).
 
 ```php
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 #[UseFactory(ProductFactory::class)]
-final class Product extends Model {}
+final class Product extends Model
+{
+    use HasFactory;
+}
 ```
 
 ## Domain sub-namespacing

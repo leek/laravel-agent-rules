@@ -87,4 +87,4 @@ final class SendOrderConfirmation implements ShouldQueue
 
 - **SHOULD** keep listeners thin — wrap a single Action when logic grows beyond a few lines.
 - **SHOULD** prefer a queued listener over a synchronous one when the side effect is not user-facing.
-- **MUST** declare `failed()` on queued listeners; never silently swallow failures.
+- **MUST** implement `failed(Event $event, Throwable $e)` on queued listeners when the side effect needs ops attention (mail, charges, external writes) — log context (event payload ids, message). One-shot internal listeners may omit it; never silently swallow unrecoverable failures you do handle.

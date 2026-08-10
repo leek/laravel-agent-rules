@@ -54,36 +54,9 @@ public function publish(): void
 }
 ```
 
-## URL state — `#[Url]`
-
-**PREFER** `#[Url]` per-property over the legacy `$queryString` array. Sync component state to the URL for filter/search/sort UIs so refresh and back/forward preserve state:
-
-```php
-use Livewire\Attributes\Url;
-
-#[Url(except: '')]
-public string $search = '';
-
-#[Url(except: 'all')]
-public string $status = 'all';
-
-#[Url(history: true)]
-public int $page = 1;
-
-public function updatingSearch(): void
-{
-    $this->resetPage();
-}
-```
-
-- `except` — keep value out of the URL when it equals this (clean URLs on defaults).
-- `history: true` — `pushState` so the back button restores previous values; default `replaceState`.
-- `as: 'q'` — rename the query-string key.
-- **MUST** reset pagination when a filter changes via `updating{Property}()` — otherwise stale `page=N` runs against a smaller filtered set and returns an empty page.
-
 ## Property-level validation — `#[Validate]`
 
-**PREFER** `#[Validate]` over a `rules()` method when rules live on the property:
+**PREFER** `#[Validate]` on the property over a `rules()` method when rules are property-local:
 
 ```php
 use Livewire\Attributes\Validate;
@@ -95,11 +68,11 @@ public string $title = '';
 public string $email = '';
 ```
 
-Then `$this->validate()` runs all attribute-defined rules. Combine with `wire:model.blur` for real-time validation.
+Then `$this->validate()` runs all attribute-defined rules. For server-side validation on blur, pair with `wire:model.live.blur` (bare `wire:model.blur` does **not** hit the server — see modifiers above).
 
 ## Computed properties — `#[Computed]`
 
-Use `#[Computed]` for derived values accessed many times per render — Livewire memoizes the result for the lifetime of the render pass:
+Use `#[Computed]` for derived values accessed many times per render — Livewire memoizes for the **current request** only by default:
 
 ```php
 use Livewire\Attributes\Computed;
@@ -111,41 +84,26 @@ public function unreadCount(): int
 }
 ```
 
-Read in Blade as `{{ $this->unreadCount }}`. Without `#[Computed]`, the method runs once per access — death-by-N-queries.
+Read in Blade as `{{ $this->unreadCount }}`. Without `#[Computed]`, the method runs once per access — death-by-N-queries. Clear a stale memo with `unset($this->unreadCount)` after the underlying data changes.
 
-`#[Computed(cache: true)]` persists across renders; `#[Computed(persist: 60)]` caches in the cache store for N seconds.
-
-## Event listeners — `#[On]`
-
-**PREFER** `#[On('event-name')]` on a handler method over the legacy `protected $listeners = [...]` array:
+Cross-request options (`persist` / `cache` are **bools**; TTL is `seconds`, default 3600):
 
 ```php
-use Livewire\Attributes\On;
-
-#[On('order-placed')]
-public function refreshTotals(int $orderId): void
-{
-    // ...
-}
+#[Computed(persist: true)]                    // this component instance, across requests
+#[Computed(persist: true, seconds: 60)]       // same, custom TTL
+#[Computed(cache: true)]                      // shared across all component instances
+#[Computed(cache: true, seconds: 300, key: 'homepage-posts')]
 ```
 
-Wildcards: `#[On('order-*')]`. Dispatch from Blade: `$dispatch('order-placed', orderId: 42)`.
+## Other attributes (short)
 
-## Layout + title — `#[Layout]` / `#[Title]`
-
-For full-page Livewire components, pin layout and `<title>` via attributes instead of returning a layout view:
-
-```php
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
-
-#[Layout('layouts.app')]
-#[Title('Dashboard')]
-class Dashboard extends Component
-{
-    // ...
-}
-```
+| Attribute | Use |
+| --- | --- |
+| `#[Url(except: '', history: true, as: 'q')]` | Sync property to query string; **PREFER** over legacy `$queryString`. **MUST** reset pagination in `updating{Property}()` when a filter changes. |
+| `#[On('order-placed')]` | Event listener on a method; **PREFER** over `$listeners`. Wildcards: `#[On('order-*')]`. Blade: `$dispatch('order-placed', orderId: 42)`. |
+| `#[Layout('layouts.app')]` / `#[Title('Dashboard')]` | Full-page layout and `<title>`. |
+| `#[Reactive]` | Child re-renders when parent-bound value changes. |
+| `#[Modelable]` | Child property the parent can `wire:model` against. |
 
 ## Tamper-proof properties — `#[Locked]`
 
@@ -160,25 +118,9 @@ public int $userId;
 
 Mutating a locked property from the client throws.
 
-## Parent → child binding — `#[Reactive]` / `#[Modelable]`
-
-- **`#[Reactive]`** on a child property — child re-renders when the parent's bound value changes.
-- **`#[Modelable]`** on a child property — lets the parent use `wire:model` against the child component:
-
-```php
-// child
-#[Modelable]
-public string $value = '';
-
-// parent
-<livewire:custom-input wire:model="title" />
-```
-
 ## DOM morphing
 
-- Use `wire:key` on both branches of `@if/@else` blocks with structurally different DOM trees.
-- Without keys, morphdom bleeds elements from the old state into the new.
-- Pattern:
+Use `wire:key` on both branches of `@if/@else` blocks with structurally different DOM trees — without keys, morphdom bleeds elements across states:
 
 ```blade
 @if ($items->isNotEmpty())
@@ -188,17 +130,7 @@ public string $value = '';
 @endif
 ```
 
-## Component parameter names
+## Component parameters + package aliases
 
-- `@livewire(Component::class, ['key' => $value])` params are matched by array key name.
-- `mount()` parameter names **MUST** match array keys exactly — a mismatch silently resolves to `null`.
-- Always verify Blade `@livewire` calls match the target `mount()` signature after refactoring.
-
-## Component aliases
-
-- `Livewire::component('package::name', ...)` is not enough for `package::...` resolution — the finder treats `::` names as namespaces before checking explicit registrations.
-- When a package uses `::` aliases, register the namespace:
-
-```php
-Livewire::addNamespace('package', classNamespace: 'Vendor\\Package\\Livewire');
-```
+- `@livewire(Component::class, ['key' => $value])` params match `mount()` **by array key name** — a mismatch silently resolves to `null`. Verify Blade calls after refactoring.
+- `Livewire::component('package::name', ...)` is not enough for `package::...` resolution (finder treats `::` as namespaces first). Register: `Livewire::addNamespace('package', classNamespace: 'Vendor\\Package\\Livewire')`.

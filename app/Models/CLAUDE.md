@@ -46,26 +46,22 @@ final class Project extends Model
 }
 ```
 
-> Fresh L11+ skeletons no longer pull in `HasFactory` by default — factories are resolved via convention or `#[UseFactory]` (see below).
+> **`HasFactory` still provides `Model::factory()`.** Keep the trait on models that need factories. Use `#[UseFactory(SomeFactory::class)]` only to pin a non-conventional factory class — it does not replace `HasFactory`. Fresh skeletons and `make:model` still include the trait.
 
 ## Casts and attributes
 
-`casts()` method (L11+) is preferred over the legacy `protected $casts = [...]` property because it allows runtime class references and is type-safe. The property still works.
-
-Built-in casts include `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable::class`, `AsEnumCollection::of(...)`, `AsCollection::of(SomeClass::class)` (L12+ — maps each item into a class), `'json:unicode'` (L12+ — JSON without escaping unicode), `'asFluent'` (L12+).
+**PREFER** the `casts()` method (L11+) over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable`, `AsEnumCollection`, plus L12+ `AsCollection::of(...)`, `'json:unicode'`, `'asFluent'`.
 
 ```php
 protected function casts(): array
 {
     return [
-        'status' => ProjectStatus::class,
+        'status'      => ProjectStatus::class,
+        'archived_at' => 'datetime',
     ];
 }
-```
 
-Custom value-object cast via accessor/mutator:
-
-```php
+// Value-object via Attribute accessor/mutator when a cast class is overkill:
 protected function budgetCents(): Attribute
 {
     return Attribute::make(
@@ -120,7 +116,7 @@ final class Order extends Model
 
 ## Query scopes — `#[Scope]` (L11+)
 
-**PREFER** the `#[Scope]` attribute over the legacy `scopeXxx` method-naming convention. Both work; the attribute is more explicit and chainable without IDE magic.
+**PREFER** `#[Scope]` over the legacy `scopeXxx` naming. Both work; the attribute is explicit and IDE-friendly.
 
 ```php
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -131,33 +127,22 @@ protected function ownedBy(Builder $query, int $userId): void
     $query->where('owner_id', $userId);
 }
 
-// Call site (unchanged):
-$projects = Project::ownedBy($user->id)->get();
+// Call site (unchanged): Project::ownedBy($user->id)->get();
 ```
 
-Legacy form still supported:
-
-```php
-public function scopeOwnedBy(Builder $query, int $userId): Builder
-{
-    return $query->where('owner_id', $userId);
-}
-```
-
-**MUST** push reusable or multi-condition query logic into a scope / query object rather than leaving it inline in a controller or Action. Add a scope for any filter used in more than one place.
+**MUST** push reusable / multi-condition query logic into a scope (or query object) rather than leaving it inline in a controller or Action.
 
 ### Query expression rules
 
-- **MUST** group `orWhere()` clauses inside a closure before chaining additional filters; otherwise SQL precedence turns `a OR b AND c` into a different query than `(a OR b) AND c`.
-- **PREFER** relationship helpers over manual foreign-key predicates: `whereBelongsTo($user)`, `whereRelation(...)`, `whereHasMorph(...)`. They read as model relationships and avoid hard-coded `*_id` / morph-type branches.
-- **MUST** whitelist user-selected SQL fragments (sorts, aggregates, report dimensions) with an enum or explicit map before using `selectRaw()` / `orderByRaw()`. Never concatenate request strings into SQL.
-- **SHOULD** select only needed columns when eager-loading large relations: `with('reviews:id,product_id,rating,text')`. Always include the related model's primary key and the foreign key needed to match it back to the parent.
+- **MUST** group `orWhere()` clauses inside a closure before chaining more filters — otherwise SQL precedence turns `a OR b AND c` into the wrong query.
+- **PREFER** relationship helpers: `whereBelongsTo($user)`, `whereRelation(...)`, `whereHasMorph(...)`.
+- **MUST** whitelist user-selected SQL fragments (sorts, aggregates, dimensions) with an enum or map before `selectRaw()` / `orderByRaw()`. Never concatenate request strings into SQL.
+- **SHOULD** select only needed columns when eager-loading large relations: `with('reviews:id,product_id,rating,text')` — always include PK + FK used to match the parent.
 
 ```php
 Email::query()
     ->where(function (Builder $query) use ($search): void {
-        $query
-            ->where('subject', 'like', "%{$search}%")
+        $query->where('subject', 'like', "%{$search}%")
             ->orWhere('body', 'like', "%{$search}%");
     })
     ->where('active', true)
@@ -166,7 +151,7 @@ Email::query()
 
 ## Global scopes — `#[ScopedBy]` (L11+)
 
-Use for a filter that **always** applies (soft deletes, multi-tenant scoping):
+Use for a filter that **always** applies (soft deletes, multi-tenant). **PREFER** `#[ScopedBy]` over `booted()` + `addGlobalScope`.
 
 ```php
 final class ActiveScope implements Scope
@@ -179,17 +164,6 @@ final class ActiveScope implements Scope
 
 #[ScopedBy(ActiveScope::class)]
 final class Project extends Model {}
-```
-
-Legacy `booted()` form still supported:
-
-```php
-protected static function booted(): void
-{
-    static::addGlobalScope('active', function (Builder $builder): void {
-        $builder->whereNull('archived_at');
-    });
-}
 ```
 
 - **MUST** pick global scope OR named scope for the same filter — not both, unless layered behaviour is intended.
@@ -207,18 +181,8 @@ Model::shouldBeStrict(! app()->isProduction());
 
 ## Eager loading (avoid N+1)
 
-- **MUST** eager-load relations the caller will touch.
-
-❌ Lazy access inside a loop — one query per row (N+1):
-
-```php
-$orders = Order::latest()->paginate(25);
-foreach ($orders as $order) {
-    echo $order->customer->name;   // a fresh SELECT every iteration
-}
-```
-
-✅ Eager-load up front:
+- **MUST** eager-load relations the caller will touch (`with([...])`). Lazy access in a loop is N+1.
+- **SHOULD** use `withCount()` for aggregates rather than counting in a loop.
 
 ```php
 $orders = Order::query()
@@ -227,46 +191,11 @@ $orders = Order::query()
     ->paginate(25);
 ```
 
-- **SHOULD** use `withCount()` for aggregates rather than counting in a loop.
-
-## Query objects
-
-For multi-condition filters that don't fit in a single scope, wrap an immutable builder:
-
-```php
-final class ProjectQuery
-{
-    public function __construct(private Builder $query) {}
-
-    public function ownedBy(int $userId): self
-    {
-        return new self((clone $this->query)->where('owner_id', $userId));
-    }
-
-    public function active(): self
-    {
-        return new self((clone $this->query)->whereNull('archived_at'));
-    }
-
-    public function builder(): Builder
-    {
-        return $this->query;
-    }
-}
-```
+For multi-condition filters that outgrow a single scope, **SHOULD** extract an immutable query object (clone + chain) rather than growing controller `where()` trees.
 
 ## Transactions
 
-Wrap multi-step writes in a transaction:
-
-```php
-DB::transaction(function (): void {
-    $order->update(['status' => 'paid']);
-    $order->items()->update(['paid_at' => now()]);
-});
-```
-
-When the caller needs a created/updated model from the transaction, **PREFER** returning it from the transaction closure over mutating outer scope:
+Wrap multi-step writes in a transaction. **PREFER** returning the model from the closure over mutating outer scope. For read-modify-write contention, use `lockForUpdate()` **inside** the transaction:
 
 ```php
 $post = DB::transaction(function () use ($data): Post {
@@ -275,11 +204,7 @@ $post = DB::transaction(function () use ($data): Post {
 
     return $post;
 });
-```
 
-For read-modify-write contention (counter increments, balance updates, claim-a-row patterns), use `lockForUpdate()` **inside** a transaction:
-
-```php
 DB::transaction(function () use ($accountId, $amount): void {
     $account = Account::query()->lockForUpdate()->findOrFail($accountId);
     $account->balance -= $amount;
@@ -287,30 +212,15 @@ DB::transaction(function () use ($accountId, $amount): void {
 });
 ```
 
-## Large datasets — `chunk()` / `lazy()`
+## Large datasets & bulk writes
 
-- **MUST NOT** load large tables fully into memory with `all()` or `get()`.
-- **SHOULD** use `chunkById()` for paged iteration (stable cursor; safe under concurrent inserts).
-- **SHOULD** use `lazy()` for streaming a `LazyCollection` when you want collection ergonomics without holding the full result set.
-
-```php
-Order::query()->chunkById(500, function (Collection $orders) {
-    $orders->each(fn (Order $order) => $order->recompute());
-});
-
-Order::query()->lazy()->each(fn (Order $order) => $order->recompute());
-```
-
-## Bulk writes — `upsert()`
-
-For mass insert-or-update, **MUST** use `upsert()` instead of looping `firstOrCreate` / `updateOrCreate`:
+- **MUST NOT** load large tables with `all()` / `get()`. **SHOULD** use `chunkById()` (stable under concurrent inserts) or `lazy()` for streaming.
+- For mass insert-or-update, **MUST** use `upsert()` instead of looping `firstOrCreate` / `updateOrCreate`:
 
 ```php
-Product::query()->upsert(
-    $rows,                       // array of associative arrays
-    uniqueBy: ['sku'],
-    update:   ['price', 'name'],
-);
+Order::query()->chunkById(500, fn (Collection $orders) => $orders->each->recompute());
+
+Product::query()->upsert($rows, uniqueBy: ['sku'], update: ['price', 'name']);
 ```
 
 ## Model events — keep them light

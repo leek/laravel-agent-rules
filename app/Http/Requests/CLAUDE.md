@@ -14,6 +14,19 @@
 - **SHOULD** expose a `toDto()` method that returns a typed DTO when the action downstream expects structured input — keeps the action free of `$request->input(...)` calls.
 - **MUST** put user-facing validation messages through `__()` / lang files (or Laravel's default translated messages) — see `app/CLAUDE.md`.
 
+## File uploads
+
+- **MUST** validate uploads in the Form Request (`file`, `image`, `mimes:`/`mimetypes:`, `max:`) before storing — never trust client-supplied paths or extensions alone.
+- **MUST** store via `$file->store(...)` / `storeAs(...)` on a **named disk** (`config/filesystems.php`); **AVOID** writing under `public/` by hand. Use a private disk for sensitive files and authorize downloads.
+- **MUST NOT** put binary blobs in the database; persist the path/key (and disk name if multi-disk) on the model.
+
+```php
+'avatar' => ['required', 'image', 'mimes:jpg,png,webp', 'max:2048'],
+
+// after validation:
+$path = $request->file('avatar')->store('avatars', 's3');
+```
+
 ## Create
 
 ```bash
