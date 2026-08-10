@@ -10,7 +10,7 @@
 
 Three ways to bind a model to a policy, in order of preference:
 
-1. **`#[UsePolicy]` attribute on the model (L11+)** — explicit, greppable, no convention magic.
+1. **`#[UsePolicy]` attribute on the model** — explicit, greppable, no convention magic.
 
    ```php
    use Illuminate\Database\Eloquent\Attributes\UsePolicy;

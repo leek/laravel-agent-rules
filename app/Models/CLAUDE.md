@@ -14,8 +14,10 @@
 - **PREFER** Laravel Collections over plain arrays for in-memory data manipulation (`map`/`filter`/`reduce`/`pluck` over `array_*` + loops).
 - **MUST NOT** redundantly set `$table`, `$primaryKey`, `$keyType`, `$incrementing`, `$connection`, `CREATED_AT`/`UPDATED_AT`, or explicit pivot / foreign-key names when Laravel's conventions already produce that exact value (convention over configuration). Configure only genuine exceptions — e.g. a `Pivot` subclass whose table isn't the singular default (see Gotchas).
 - **SHOULD** declare `$fillable` (or `$guarded = []` with care) — never leave mass-assignment unconfigured.
+- **MUST NOT** put columns that decide ownership, tenancy, or privilege into `$fillable` when those values can arrive from client input. Set them via relationship creates (`$user->projects()->create(...)`), `safe()->merge([...])` from the authenticated context, or an Action — never from a request allowlist the client controls.
+- **MUST** hide secrets and credentials from array/JSON serialization (`$hidden` / `#[Hidden([...])]` — e.g. passwords, tokens, API keys). **MUST NOT** treat model serialization as the public API contract — use API Resources for external JSON (see `app/Http/Resources/CLAUDE.md`).
 - **MUST** cast every date/time column via `casts()` (`'ordered_at' => 'datetime'`, or `'datetime:Y-m-d'` to pin a format) so it hydrates as a Carbon instance. **MUST NOT** store or pass dates as preformatted strings — keep Carbon objects throughout and format only in the display layer.
-- **SHOULD** declare casts for every other non-scalar column (enums, JSON, money / value objects). Use the `casts()` method (L11+) — see below.
+- **SHOULD** declare casts for every other non-scalar column (enums, JSON, money / value objects). Use the `casts()` method — see below.
 - **SHOULD** use enums for finite state columns (`status`, `role`, `tier`) rather than free-form strings.
 
 ## Create
@@ -29,7 +31,8 @@ php artisan make:model Product
 ```php
 final class Project extends Model
 {
-    protected $fillable = ['name', 'owner_id', 'status'];
+    // Ownership is set via $user->projects()->create(...), not mass assignment.
+    protected $fillable = ['name', 'status'];
 
     protected function casts(): array
     {
@@ -50,7 +53,7 @@ final class Project extends Model
 
 ## Casts and attributes
 
-**PREFER** the `casts()` method (L11+) over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable`, `AsEnumCollection`, plus L12+ `AsCollection::of(...)`, `'json:unicode'`, `'asFluent'`.
+**PREFER** the `casts()` method over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable`, `AsEnumCollection`, `AsCollection::of(...)`, `'json:unicode'`, `'asFluent'`.
 
 ```php
 protected function casts(): array
@@ -71,7 +74,7 @@ protected function budgetCents(): Attribute
 }
 ```
 
-## Model wiring — PHP attributes (L11+)
+## Model wiring — PHP attributes
 
 **PREFER** PHP attributes over magic conventions or `booted()` registrations. They make the wiring greppable and explicit.
 
@@ -114,7 +117,7 @@ final class Order extends Model
 - **PREFER** relationship-aware writes over manual foreign keys: `$team->members()->create($data)` instead of `Member::create(['team_id' => $team->id] + $data)`. The relationship call keeps ownership, events, and future relation constraints in one place.
 - **SHOULD** add custom relationship methods for reusable filtered/sorted subsets (`completedOrders()`, `activeSubscriptions()`) rather than repeating the same `where()` chain in controllers.
 
-## Query scopes — `#[Scope]` (L11+)
+## Query scopes — `#[Scope]`
 
 **PREFER** `#[Scope]` over the legacy `scopeXxx` naming. Both work; the attribute is explicit and IDE-friendly.
 
@@ -149,7 +152,7 @@ Email::query()
     ->get();
 ```
 
-## Global scopes — `#[ScopedBy]` (L11+)
+## Global scopes — `#[ScopedBy]`
 
 Use for a filter that **always** applies (soft deletes, multi-tenant). **PREFER** `#[ScopedBy]` over `booted()` + `addGlobalScope`.
 

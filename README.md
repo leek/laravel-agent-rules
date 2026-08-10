@@ -4,7 +4,7 @@ Directory-scoped agent rules for Laravel projects. Each `CLAUDE.md` lives next t
 
 ## Requirements
 
-- **Laravel 11+** (bootstrap `withMiddleware` / `withExceptions`, attribute model wiring, `casts()` method, schedule in `routes/console.php`). Older apps need adaptation.
+- **Laravel 12+** (bootstrap `withMiddleware` / `withExceptions`, attribute model wiring, `casts()` method, schedule in `routes/console.php`).
 - **Pest** for new tests (`tests/CLAUDE.md`). PHPUnit-style assertions still work under Pest.
 - **Optional package dirs** — install rules only matter when the package is present:
   - `app/Livewire/` — Livewire 4
@@ -27,7 +27,7 @@ npx apply-agent-rules apply leek/laravel-agent-rules
 npx apply-agent-rules apply leek/laravel-agent-rules --agents claude,codex
 
 # Pin to a release tag
-npx apply-agent-rules apply leek/laravel-agent-rules@v0.17.1 --agents claude
+npx apply-agent-rules apply leek/laravel-agent-rules@v0.18.0 --agents claude
 
 # Re-pull later, preserving local edits and pruning removed files
 npx apply-agent-rules update
@@ -83,7 +83,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `app/Concerns/`                   | Traits: one capability per trait, `boot`/`initialize` hooks, declared host contracts |
 | `app/Contracts/`                  | Interfaces: ISP, depend-on-abstraction, bind in a provider |
 | `app/States/`                     | State machines (`spatie/laravel-model-states`): transition graph, guarded transitions |
-| `app/Exceptions/`                 | Domain exceptions, static constructors, L11+ `withExceptions()` config |
+| `app/Exceptions/`                 | Domain exceptions, static constructors, `withExceptions()` config |
 | `app/Observers/`                  | Observer rules + `#[ObservedBy]` attribute registration   |
 | `app/Events/`                     | Event rules (`ShouldDispatchAfterCommit`); listeners in `app/Listeners/` |
 | `app/Broadcasting/`               | Channel authorization classes (`make:channel`), `channels.php` registration, presence vs private, `ShouldBroadcast` events |
@@ -112,7 +112,7 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 
 ## Versioning
 
-Releases are tagged. Pin with `leek/laravel-agent-rules@v0.17.1` if you want reproducible installs.
+Releases are tagged. Pin with `leek/laravel-agent-rules@v0.18.0` if you want reproducible installs.
 
 ## License
 

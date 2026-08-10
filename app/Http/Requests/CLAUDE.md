@@ -78,7 +78,7 @@ public function after(): array
 
 ## Safe input — `$request->safe()`
 
-After validation, **PREFER** `$request->safe()->only([...])` / `->except([...])` / `->merge([...])` over `$request->validated()` when filtering or adding trusted server-side fields:
+After validation, **MUST** mass-assign only a trusted allowlist — prefer `$request->safe()->only([...])` / `->except([...])` / `->merge([...])` over bare `$request->validated()` when filtering, stripping confirmation fields, or adding trusted server-side fields (see Controllers). Bare `validated()` is fine only when every validated key is already safe to write.
 
 ```php
 $attributes = $request->safe()->except(['confirm_password']);
@@ -106,6 +106,8 @@ When uniqueness must hold across more than one table, **SHOULD** stack multiple 
 
 ## Example with `toDto()`
 
+Foreign keys the client may supply **MUST** be scoped to the authenticated boundary (see tenant-scoped rules above) — never a bare global `exists` alone.
+
 ```php
 final class StoreOrderRequest extends FormRequest
 {
@@ -117,7 +119,12 @@ final class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id'      => ['required', 'integer', 'exists:customers,id'],
+            'customer_id' => [
+                'required',
+                'integer',
+                Rule::exists('customers', 'id')
+                    ->where('company_id', $this->user()->company_id),
+            ],
             'items'            => ['required', 'array', 'min:1'],
             'items.*.sku'      => ['required', 'string'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],

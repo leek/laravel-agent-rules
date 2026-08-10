@@ -56,4 +56,4 @@ $this->app->when(ProcessPodcast::class)
 php artisan make:provider PaymentProvider
 ```
 
-Register the provider in `bootstrap/providers.php` (Laravel 11+) or `config/app.php` (Laravel 10 and below).
+Register the provider in `bootstrap/providers.php`.

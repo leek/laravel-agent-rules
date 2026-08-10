@@ -39,4 +39,4 @@ final class FetchUsersCommand extends Command
 
 ## Scheduling
 
-Scheduling rules live in `routes/CLAUDE.md` — see the "Task scheduling" section. In Laravel 11+, schedules are defined in `routes/console.php` via the `Schedule` facade, not in `app/Console/Kernel.php` (which no longer exists in fresh L11+ skeletons).
+Scheduling rules live in `routes/CLAUDE.md` — see the "Task scheduling" section. Schedules are defined in `routes/console.php` via the `Schedule` facade, not in `app/Console/Kernel.php` (removed from the modern skeleton).

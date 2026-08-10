@@ -40,7 +40,7 @@ public function terminate(Request $request, Response $response): void
 }
 ```
 
-## Registration — `bootstrap/app.php` (Laravel 11+)
+## Registration — `bootstrap/app.php`
 
 Register middleware in `bootstrap/app.php` via `withMiddleware(fn (Middleware $m) => ...)`:
 

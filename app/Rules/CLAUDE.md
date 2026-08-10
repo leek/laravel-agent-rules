@@ -8,7 +8,7 @@
 
 ## Rules
 
-- **MUST** implement `Illuminate\Contracts\Validation\ValidationRule` (Laravel 10+); legacy `Rule` interface is deprecated.
+- **MUST** implement `Illuminate\Contracts\Validation\ValidationRule`; do not use the legacy `Rule` interface.
 - **MUST** report failures via the `$fail` closure — do NOT throw or `return false`.
 - **SHOULD** pull external state (services, repos) via constructor injection; resolve via the container at call site if needed.
 

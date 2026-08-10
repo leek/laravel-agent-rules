@@ -17,7 +17,7 @@
 php artisan make:class Support/Cart
 ```
 
-`make:class` is built into Laravel 12+. Or just add a plain class under `app/Support/`.
+Or just add a plain class under `app/Support/`.
 
 ---
 

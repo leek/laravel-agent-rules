@@ -29,11 +29,9 @@
 ## Example
 
 ```php
-Route::middleware('auth')->group(function () {
-    Route::name('users.')->group(function () {
-        Route::get('/', UserIndex::class)->name('index');
-        Route::get('/{user}', UserShow::class)->name('show');
-    });
+Route::middleware('auth')->prefix('users')->name('users.')->group(function () {
+    Route::get('/', UserIndex::class)->name('index');
+    Route::get('/{user}', UserShow::class)->name('show');
 });
 ```
 
@@ -108,7 +106,7 @@ Route::prefix('v1')
 Route::middleware('throttle:5,1')->post('/login', LoginController::class);
 ```
 
-For complex/named limiters, define them in `App\Providers\AppServiceProvider::boot()` with `RateLimiter::for(...)` and reference by name (`throttle:uploads`). The L11+ skeleton has no `RouteServiceProvider` — see `app/Http/Middleware/CLAUDE.md` for the `RateLimiter::for()` example.
+For complex/named limiters, define them in `App\Providers\AppServiceProvider::boot()` with `RateLimiter::for(...)` and reference by name (`throttle:uploads`). There is no `RouteServiceProvider` — see `app/Http/Middleware/CLAUDE.md` for the `RateLimiter::for()` example.
 
 ## Custom parameter → model binding
 
@@ -122,7 +120,7 @@ For non-trivial resolution logic, use `Route::bind()` or override `resolveRouteB
 
 ## Task scheduling (`routes/console.php`)
 
-In Laravel 11+, scheduled tasks live in `routes/console.php` using the `Schedule` facade — **NOT** in `app/Console/Kernel.php` (which is removed from the L11+ skeleton).
+Scheduled tasks live in `routes/console.php` using the `Schedule` facade — **NOT** in `app/Console/Kernel.php` (removed from the modern skeleton).
 
 ```php
 use Illuminate\Support\Facades\Schedule;
@@ -143,7 +141,7 @@ Hard rules:
 - **SHOULD** pin a `->timezone('America/New_York')` on time-sensitive tasks; defaults to the app timezone.
 - **`->evenInMaintenanceMode()`** — for must-run-always tasks (billing, queue health pings).
 
-Sub-minute frequencies (L11+): `everySecond()`, `everyTwoSeconds()`, `everyFiveSeconds()`, `everyTenSeconds()`, `everyThirtySeconds()`.
+Sub-minute frequencies: `everySecond()`, `everyTwoSeconds()`, `everyFiveSeconds()`, `everyTenSeconds()`, `everyThirtySeconds()`.
 
 Dry-run a single task:
 

@@ -16,7 +16,7 @@
 
 > Use sparingly. Default home for new logic is an **Action** (`app/Actions/`).
 
-## Registration — `#[ObservedBy]` attribute (Laravel 11+)
+## Registration — `#[ObservedBy]` attribute
 
 **PREFER** the `#[ObservedBy(...)]` attribute on the model over `Model::observe(...)` in a service provider:
 
@@ -30,7 +30,7 @@ final class Order extends Model
 }
 ```
 
-Fallback (older versions, or when registering observers conditionally) — `AppServiceProvider::boot()`:
+When registering observers conditionally, use `AppServiceProvider::boot()`:
 
 ```php
 Order::observe(OrderObserver::class);
@@ -57,7 +57,8 @@ public function creating(Order $order): void
 
 public function deleting(Order $order): void
 {
-    $order->products()->delete();
+    // Mass query delete() skips Product observers — delete each model when side effects matter.
+    $order->products()->each(fn (Product $product) => $product->delete());
 }
 
 public function updating(Album $album): void

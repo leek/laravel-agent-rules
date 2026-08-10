@@ -11,7 +11,8 @@
 - **MUST** keep methods thin: validate (via FormRequest) → call Action/Support → return Response.
 - **MUST NOT** validate inline (`$request->validate([...])` / `Validator::make(...)`) on routes users hit — input validation lives in a FormRequest. Exception: throwaway internal/debug endpoints may use inline validation; promote to a FormRequest as soon as the route is real product surface.
 - **AVOID** building queries inline. Multi-clause `where()`/`join()`/aggregate chains belong in a model scope or query object (see `app/Models/CLAUDE.md`); the controller calls the scope/Action and returns the result.
-- **MUST** mass-assign validated data — `Model::create($request->validated())` or `$parent->relation()->create($request->validated())`. **MUST NOT** set attributes one-by-one from raw request input.
+- **MUST** mass-assign only an allowlisted, trusted attribute set — never raw request input. Prefer `$request->safe()->only([...])`, `safe()->except([...])`, or a Form Request `toDto()` (see `app/Http/Requests/CLAUDE.md`). Bare `$request->validated()` is allowed only when the Form Request rules are already the complete write-allowlist and contain no client-controlled ownership, tenancy, or privilege fields. **MUST NOT** set attributes one-by-one from raw request input.
+- **MUST** shape API JSON through an API Resource (or an equivalent explicit contract) — **MUST NOT** return Eloquent models via `response()->json($model)` / `return $model` (see `app/Http/Resources/CLAUDE.md`).
 - **PREFER** creating child records through the already-bound relationship (`$team->members()->create(...)`) instead of assigning the foreign key manually.
 - **MUST** eager-load (`with(...)`) every relation the response/view will touch — the controller owns N+1 prevention (see `app/Models/CLAUDE.md`).
 - **PREFER** scoping ownership before lookup (`whereBelongsTo($request->user())->findOrFail($id)`) when non-owned records should be indistinguishable from missing records. `findOrFail()` then `abort(403)` leaks that the record exists.
@@ -44,7 +45,7 @@ php artisan make:controller UserController --resource
 
 ## Controller-level middleware — `HasMiddleware`
 
-When middleware needs to apply to specific controller actions, **MUST** implement the `HasMiddleware` interface and return middleware definitions from a static `middleware()` method. Do NOT use the legacy `$this->middleware(...)` constructor call — it is deprecated as of Laravel 11.
+When middleware needs to apply to specific controller actions, **MUST** implement the `HasMiddleware` interface and return middleware definitions from a static `middleware()` method. Do NOT use the legacy `$this->middleware(...)` constructor call.
 
 ```php
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -70,9 +71,13 @@ Trivial CRUD needs no Action — validate → write → respond is enough (see t
 ```php
 public function store(StoreUserRequest $request): JsonResponse
 {
-    $user = User::query()->create($request->validated());
+    $user = User::query()->create(
+        $request->safe()->only(['name', 'email', 'password'])
+    );
 
-    return response()->json($user);
+    return (new UserResource($user))
+        ->response()
+        ->setStatusCode(201);
 }
 ```
 
@@ -94,6 +99,7 @@ For successful API mutations with no response body, **PREFER** `response()->noCo
 ```php
 public function destroy(User $user): Response
 {
+    $this->authorize('delete', $user);
     $user->delete();
 
     return response()->noContent();

@@ -6,7 +6,7 @@
 
 - **MUST** be a descriptive verb-phrase class (e.g. `SendOrderConfirmation`, `RecordPaymentMetric`). No `Listener` suffix required.
 
-## Auto-discovery (Laravel 11+)
+## Auto-discovery
 
 Laravel auto-discovers classes under `app/Listeners/` that define a `handle*` method with a **type-hinted** event parameter:
 
