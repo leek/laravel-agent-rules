@@ -290,6 +290,17 @@ else
   note "no root CLAUDE.md/AGENTS.md"
 fi
 
+# 19 — README must not claim empty skeleton dirs that are not in the tree
+if rg -q 'Empty `bootstrap/`|empty bootstrap/, public/, and storage' README.md; then
+  for d in bootstrap public storage; do
+    if [[ ! -d $d ]]; then
+      bad "README claims empty $d/ but directory is missing"
+    fi
+  done
+else
+  note "README does not claim missing empty skeleton dirs"
+fi
+
 if (( fail )); then
   print -- "\nverify-rules: FAILED"
   exit 1

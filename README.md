@@ -110,8 +110,6 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `tests/Feature/`                  | The default test type: full-stack HTTP/Livewire/console, allow+deny boundaries, fake external I/O, shape-not-strings |
 | `tests/Unit/`                     | Genuinely isolated logic only: no DB/HTTP/container, no `RefreshDatabase`, when NOT to use a unit test |
 
-Empty `bootstrap/`, `public/`, and `storage/` directories exist only so the tree mirrors the Laravel skeleton for path-aligned installs; they ship no rules.
-
 ## Verify (maintainers)
 
 Structural acceptance checks for this ruleset:
