@@ -88,4 +88,4 @@ final class OrderShipped implements ShouldBroadcast
 }
 ```
 
-> Channel route registration and the `channels.php` file are covered in `routes/CLAUDE.md`.
+> Register channel name patterns in `routes/channels.php` (see Registration above). Route file roles are listed in `routes/CLAUDE.md`.

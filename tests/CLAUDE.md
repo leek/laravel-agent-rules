@@ -11,7 +11,7 @@ Default test framework: [Pest](https://pestphp.com/). **Pest is required** for n
 
 - **MUST** write a test for every class that contains logic (Actions, Support, Jobs, Commands, Livewire components, Controllers, Policies).
 - **MUST** write a test for every route exposed to users (auth/redirect/permission boundaries).
-- **SHOULD** target coverage ≥ 70%; aim for ≥ 80%. Verify with `php artisan test --coverage --min=80`.
+- **SHOULD** use coverage reports to find untested behaviour, not as a numeric gate agents grind toward.
 
 ## What to test
 

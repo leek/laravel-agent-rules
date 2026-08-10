@@ -8,7 +8,7 @@
 
 ## Rules
 
-- **MUST NOT** contain business logic — push to `app/Actions/` or `app/Support/`.
+- **MUST NOT** put multi-step workflows, external I/O, or cross-aggregate orchestration on the model — push those to `app/Actions/` or `app/Support/`. Small attribute-local behaviour is fine: predicates (`isPaid()`), single-field transitions that only touch this row, and presentation helpers that read own attributes.
 - **MUST** prefer Eloquent over the Query Builder, and the Query Builder over raw SQL. Drop to `DB::table()` / `DB::raw()` only when Eloquent genuinely can't express the query — Eloquent gives casts, scopes, events, and soft deletes for free.
 - **MUST** remember that `DB::table()` bypasses Eloquent soft-delete scopes, casts, accessors, model events, and observers. If you drop to the Query Builder for a soft-deletable table, manually add `whereNull('deleted_at')` or document why trashed rows are included.
 - **PREFER** Laravel Collections over plain arrays for in-memory data manipulation (`map`/`filter`/`reduce`/`pluck` over `array_*` + loops).
@@ -195,13 +195,15 @@ protected static function booted(): void
 - **MUST** pick global scope OR named scope for the same filter — not both, unless layered behaviour is intended.
 - **SHOULD** keep global scopes minimal — they apply to every query and are easy to forget.
 
-## Prevent lazy loading in dev
+## Strict models in non-production
 
-In `AppServiceProvider::boot()`, throw on any lazy-loaded relation in non-production environments so N+1 surfaces during development instead of in prod logs:
+In `AppServiceProvider::boot()`, enable strict Eloquent behaviour outside production so N+1, missing attributes, and mass-assignment surprises fail loudly in dev/test:
 
 ```php
-Model::preventLazyLoading(! app()->isProduction());
+Model::shouldBeStrict(! app()->isProduction());
 ```
+
+`shouldBeStrict()` turns on `preventLazyLoading()`, `preventSilentlyDiscardingAttributes()`, and `preventAccessingMissingAttributes()`. Prefer it over wiring the three calls separately unless you need only one.
 
 ## Eager loading (avoid N+1)
 
@@ -320,6 +322,7 @@ Product::query()->upsert(
 - Use `SoftDeletes` for records that must be recoverable (orders, invoices, user-generated content).
 - **AVOID** soft-deleting reference/lookup data — hard delete or archive instead.
 - Restore with `$model->restore()` (fires the `restored` event), `restoreQuietly()` to skip events, or query-builder `restore()` on a `withTrashed()` query for bulk restores (no model events, like other mass operations).
+- **MUST** treat unique indexes carefully with soft deletes — a plain unique on `email` blocks re-creating a row after soft-delete. Prefer a partial/filtered unique (e.g. Postgres partial index `WHERE deleted_at IS NULL`, or a composite that includes a soft-delete sentinel the project standardizes on). Document the chosen approach in the migration.
 
 ## Gotchas (silent failures)
 

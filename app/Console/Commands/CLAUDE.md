@@ -23,7 +23,7 @@ php artisan make:command FetchUsers
 ## Example
 
 ```php
-class FetchUsersCommand extends Command
+final class FetchUsersCommand extends Command
 {
     protected $signature = 'app:fetch-users {--since=}';
     protected $description = 'Fetch users updated since the given timestamp.';

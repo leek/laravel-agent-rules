@@ -38,7 +38,8 @@ php artisan make:factory UserFactory
 ## Example
 
 ```php
-class ProductFactory extends Factory
+/** @extends Factory<Product> */
+final class ProductFactory extends Factory
 {
     public function definition(): array
     {

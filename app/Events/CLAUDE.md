@@ -6,11 +6,13 @@
 
 - **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Laravel core convention; matches Notifications (also no suffix). Mailables use a `Mail` suffix instead — see `app/Mail/CLAUDE.md`.
 - Listeners live in `app/Listeners/` — see `app/Listeners/CLAUDE.md`.
+- Events and Notifications both use event-like names in different namespaces (`App\Events\OrderShipped` vs `App\Notifications\OrderShipped`). **SHOULD** pick distinct class names when both exist for the same occurrence (e.g. event `OrderShipped`, notification that describes the message — or a listener named `SendOrderShipped`) so imports and stack traces stay unambiguous.
 
 ## Rules
 
 - **PREFER** an Action over an Event for synchronous business logic — Events are reserved for genuine one-to-many notifications.
 - **SHOULD** use Events for: broadcasting (WebSockets), webhooks/notifications, plug-in points for unrelated features.
+- Broadcasting: the class that fires data onto a channel is an **Event** implementing `ShouldBroadcast` / `ShouldBroadcastNow` — not a class under `app/Broadcasting/`. Channel auth gates live in `app/Broadcasting/`; wire-name, payload, and `broadcastOn()` live on the Event — see `app/Broadcasting/CLAUDE.md`.
 
 ## Create
 

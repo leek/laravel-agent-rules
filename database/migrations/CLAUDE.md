@@ -24,6 +24,16 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 - **SHOULD** declare an explicit `onDelete` policy on every foreign key (`cascade`, `restrict`, `set null`).
 - **MUST** make both `up()` and `down()` work, except where rollback is genuinely impossible (data migrations) — in that case, `down()` throws explicitly with a comment.
 
+## Expanding / zero-downtime changes
+
+For production-deployed schemas, **SHOULD** expand then contract rather than one destructive migration:
+
+1. **Expand** — add the new column/table/index (nullable or with a safe default) in a migration; deploy code that writes both old and new shapes if needed.
+2. **Backfill** — fill existing rows (job, command, or follow-up migration) without locking the app on a long `UPDATE` in the same deploy as a breaking drop.
+3. **Contract** — only after the new path is live, drop the old column/constraint in a later migration.
+
+**MUST NOT** combine “add required column + drop old column + rewrite all readers” in a single migration that cannot roll forward under load. Expand first; contract after the cutover.
+
 ## Squashing
 
 When `database/migrations/` grows beyond ~hundreds of files, **SHOULD** squash. See [Laravel docs: squashing migrations](https://laravel.com/docs/migrations#squashing-migrations).

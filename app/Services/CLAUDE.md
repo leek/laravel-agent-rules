@@ -28,7 +28,7 @@
 ❌ One business operation with no external system — it's an Action, not a Service:
 
 ```php
-class CreateUserService
+final class CreateUserService
 {
     public function create(array $data): User
     {

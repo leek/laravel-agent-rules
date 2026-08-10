@@ -4,6 +4,7 @@
 
 - **MUST** be event-like, **no suffix** (e.g. `InvoicePaid`, `OrderShipped`, `PasswordReset`).
 - **MUST NOT** use a `Mail` / `Mailable` suffix — those names belong to `app/Mail/` classes. Prefer a Notification for "tell this user something happened"; reach for a `*Mail` mailable only for non-user recipients or bespoke single-channel mail — see `app/Mail/CLAUDE.md`.
+- When an Event and a Notification both describe the same occurrence, **SHOULD** keep class names distinct across namespaces so `use` imports stay clear — see `app/Events/CLAUDE.md`.
 
 ## Channels
 

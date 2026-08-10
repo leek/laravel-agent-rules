@@ -46,14 +46,9 @@ Order columns top-to-bottom as:
 
 > When adding columns in later migrations on **MySQL/MariaDB**, **SHOULD** use `after()` / `before()` to preserve this ordering. Those modifiers are MySQL/MariaDB-only — Postgres, SQLite, and SQL Server do not support column positioning; omit them there.
 
-## Frequently-used column names
+## Common column patterns
 
-To stay consistent across projects, **SHOULD** use:
-
-- `order_column` — sort position
-- `company_number` — Company Identification Number (CIN)
-- `vat_number` — VAT ID
-- `zip_code` — postal code
+- `order_column` — sort position (avoid reserved word `order` as a column name).
 
 ## Indexes
 

@@ -140,12 +140,14 @@ else
   note "Architecture matrix present"
 fi
 
-# 9 — single batching section
+# 9 — Jobs batching guidance present (cheatsheet or section; no duplicate ## Batch* dumps)
 batch_heads=$(rg -c '^## Batch' app/Jobs/CLAUDE.md || true)
-if [[ "${batch_heads:-0}" -ne 1 ]]; then
-  bad "expected exactly one ## Batch* heading in Jobs, got ${batch_heads:-0}"
+if [[ "${batch_heads:-0}" -gt 1 ]]; then
+  bad "expected at most one ## Batch* heading in Jobs, got ${batch_heads}"
+elif ! rg -q 'Bus::batch|Batchable' app/Jobs/CLAUDE.md; then
+  bad "Jobs batching guidance (Bus::batch / Batchable) missing"
 else
-  note "single Jobs batching section"
+  note "Jobs batching guidance present (no duplicate ## Batch* dumps)"
 fi
 
 # 10 — Resources envelope is project convention
@@ -182,6 +184,110 @@ if ! rg -q "toHaveSuffix\('Mail'\)" tests/Architecture/CLAUDE.md; then
   bad "arch matrix missing Mail suffix"
 else
   note "arch matrix includes Mail suffix"
+fi
+
+# 14 — v0.16 audit: no project-specific glossary / coverage grind / overstrict Jobs retry dump
+if rg -q 'company_number|vat_number' database/CLAUDE.md; then
+  bad "project-specific company_number/vat_number glossary still in database/"
+else
+  note "no company_number/vat_number glossary"
+fi
+if rg -q '≥ 70%|>= 70%|--min=80|coverage ≥|coverage >=' tests/CLAUDE.md; then
+  bad "coverage-percent targets still in tests/CLAUDE.md"
+else
+  note "no coverage-percent targets in tests"
+fi
+if rg -q 'MUST.*set retry policy|MUST set.*\$tries.*\$backoff.*\$timeout' app/Jobs/CLAUDE.md; then
+  bad "Jobs still absolute-MUST full retry surface"
+else
+  note "Jobs retry policy softened"
+fi
+if rg -q 'MUST NOT contain business logic' app/Models/CLAUDE.md; then
+  bad "Models still absolute-bans all business logic"
+else
+  note "Models allow attribute-local behaviour"
+fi
+if ! rg -q 'attribute-local|isPaid\(\)|small attribute' app/Models/CLAUDE.md; then
+  bad "Models missing attribute-local allowance wording"
+else
+  note "Models attribute-local allowance present"
+fi
+
+# 15 — Livewire 4 (not v4.1+ alone); scar sections gone
+if rg -q 'v4\.1\+' app/Livewire/CLAUDE.md; then
+  bad "Livewire still says v4.1+ alone"
+else
+  note "Livewire version label not v4.1+"
+fi
+if ! rg -q 'Livewire 4' app/Livewire/CLAUDE.md; then
+  bad "Livewire 4 mention missing"
+else
+  note "Livewire 4 mentioned"
+fi
+for scar in '## Auto-save patterns' '## Event chain contract' '## Double-refresh' '## Filter propagation'; do
+  if rg -q -F -- "$scar" app/Livewire/CLAUDE.md; then
+    bad "Livewire scar section still present: $scar"
+  fi
+done
+note "Livewire scar sections removed"
+
+# 16 — routes/API/mail/rules fixes
+if rg -q "namespace\('App\\\\Http\\\\Controllers\\\\Api" routes/CLAUDE.md; then
+  bad "routes still use string ->namespace() for API versioning"
+else
+  note "routes API versioning without string namespace()"
+fi
+if ! rg -q 'resource collections|plural.*resource' routes/CLAUDE.md; then
+  bad "routes plural-URL rule not scoped to resource collections"
+else
+  note "routes plural scoped to resource collections"
+fi
+if ! rg -q "fail\(__\(" app/Rules/CLAUDE.md; then
+  bad "Rules example missing \$fail(__('...'))"
+else
+  note "Rules fail uses __()"
+fi
+if ! rg -q 'web or Livewire request|web/Livewire' app/Mail/CLAUDE.md; then
+  bad "Mail ShouldQueue not scoped to web/Livewire request path"
+else
+  note "Mail ShouldQueue scoped to request path"
+fi
+
+# 17 — class index + shouldBeStrict + lang + expand-contract migrations
+for needle in 'Listener' 'Livewire' 'View Component' 'Feature (Pennant)' 'Resource (API)'; do
+  if ! rg -q -F -- "$needle" app/CLAUDE.md; then
+    bad "class naming index missing: $needle"
+  fi
+done
+note "class naming index complete"
+if ! rg -q 'shouldBeStrict' app/Models/CLAUDE.md app/Providers/CLAUDE.md; then
+  bad "shouldBeStrict missing from Models/Providers"
+else
+  note "shouldBeStrict present"
+fi
+if [[ ! -f lang/CLAUDE.md ]]; then
+  bad "lang/CLAUDE.md missing"
+elif ! rg -q 'snake_case|__\(' lang/CLAUDE.md; then
+  bad "lang/CLAUDE.md missing key layout / __() guidance"
+else
+  note "lang/CLAUDE.md present"
+fi
+if ! rg -q 'expand then contract|Expand.*Contract|zero-downtime' database/migrations/CLAUDE.md; then
+  bad "expand/contract migration guidance missing"
+else
+  note "expand/contract migrations present"
+fi
+if ! rg -q 'soft.?delete|SoftDeletes' app/Models/CLAUDE.md || ! rg -q 'unique' app/Models/CLAUDE.md; then
+  bad "soft-delete + unique footgun guidance incomplete"
+else
+  note "soft-delete unique guidance present"
+fi
+
+# 18 — no root agent rules (Laravel Boost)
+if [[ -f CLAUDE.md || -f AGENTS.md ]]; then
+  bad "root CLAUDE.md/AGENTS.md must not exist"
+else
+  note "no root CLAUDE.md/AGENTS.md"
 fi
 
 if (( fail )); then

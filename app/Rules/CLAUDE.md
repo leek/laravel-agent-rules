@@ -54,7 +54,7 @@ public function rules(): array
     'required',
     function (string $attribute, mixed $value, Closure $fail) {
         if (Post::where('slug', $value)->exists()) {
-            $fail('Slug already taken.');
+            $fail(__('validation.slug_taken'));
         }
     },
 ],

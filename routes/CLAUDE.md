@@ -11,13 +11,13 @@
 
 | Entity     | Pattern                          | Examples                                            |
 | ---------- | -------------------------------- | --------------------------------------------------- |
-| Route URL  | lowercase, **plural**            | `/users`, `/products`, `/categories`                |
+| Route URL  | lowercase; **plural** for resource collections | `/users`, `/products`; singular OK for auth/self (`/login`, `/me`) |
 | Route name | `snake_case` with dot notation   | `users.show`, `products.index`, `categories.create` |
 
 ## Rules
 
 - **MUST NOT** put business logic in route files. A route maps a URL to a controller, invokable, or single-action class — **AVOID** closures that contain logic beyond a one-line delegation (route caching breaks on closures, too).
-- **MUST** keep URL segments lowercase and plural.
+- **MUST** keep URL segments lowercase. **MUST** use **plural** segments for resource collections (`/users`, `/orders/{order}`); singular or non-resource paths are fine for auth, settings, and one-off actions (`/login`, `/me`, `/settings`).
 - **MUST** give every route a name; use dot notation.
 - **MUST** group routes by entity, then nest middleware/prefix groups outside the entity group.
 - **SHOULD** prefer resource routes for CRUD: `Route::resource('users', UserController::class)`.
@@ -83,14 +83,18 @@ Route::middleware('auth:sanctum')->prefix('conversations')->group(function () {
 
 ## API versioning
 
-Version public APIs via a prefix + namespace group. Per-version controllers live under `App\Http\Controllers\Api\V{N}\`:
+Version public APIs via a prefix + name group. Per-version controllers live under `App\Http\Controllers\Api\V{N}\` and are referenced by FQCN (or imported class) in the route file — **AVOID** string `->namespace(...)` groups.
 
 ```php
+use App\Http\Controllers\Api\V1\InvoiceController;
+
 Route::prefix('v1')
     ->name('v1.')
-    ->namespace('App\Http\Controllers\Api\V1')
     ->middleware(['api', 'auth:sanctum', 'throttle:60,1'])
-    ->group(base_path('routes/api/v1.php'));
+    ->group(function () {
+        Route::apiResource('invoices', InvoiceController::class);
+        // or: require base_path('routes/api/v1.php');
+    });
 ```
 
 - **MUST** version any externally-consumed API. Breaking changes ship as `v2`, never as silent edits to `v1`.

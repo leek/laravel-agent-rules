@@ -21,6 +21,7 @@
 These belong in `AppServiceProvider::boot()` unless a package documents a different home:
 
 - **MUST** prohibit destructive database commands in production with `DB::prohibitDestructiveCommands(app()->isProduction())`.
+- **MUST** enable strict Eloquent outside production: `Model::shouldBeStrict(! app()->isProduction())` — lazy loading, silently discarded attributes, and missing-attribute access all throw in dev/test (see `app/Models/CLAUDE.md`).
 - **SHOULD** define `Password::defaults(...)` once so Form Requests can use `Password::default()` instead of duplicating password policy chains. Keep production strict; local/test may return a lighter rule when the project accepts that tradeoff.
 
 ## Example: interface → implementation

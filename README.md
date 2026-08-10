@@ -27,7 +27,7 @@ npx apply-agent-rules apply leek/laravel-agent-rules
 npx apply-agent-rules apply leek/laravel-agent-rules --agents claude,codex
 
 # Pin to a release tag
-npx apply-agent-rules apply leek/laravel-agent-rules@v0.15.0 --agents claude
+npx apply-agent-rules apply leek/laravel-agent-rules@v0.16.0 --agents claude
 
 # Re-pull later, preserving local edits and pruning removed files
 npx apply-agent-rules update
@@ -101,13 +101,16 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `resources/views/`                | Blade views: kebab-case naming, no inline JS/CSS, `@json`/`data-*`, no queries in views, dates formatted in the display layer |
 | `resources/views/components/`     | Anonymous Blade components: `@props`, `$attributes`, `@class`/`@style`/`@pushOnce`/`@fragment` |
 | `database/`                       | Schema, keys, indexes, table/column naming                |
-| `database/migrations/`            | Migration workflow                                        |
+| `database/migrations/`            | Migration workflow, expand-then-contract for production   |
 | `database/factories/`             | Factory rules                                             |
 | `database/seeders/`               | Seeder rules                                              |
+| `lang/`                           | Localization: file layout, snake_case keys, placeholders  |
 | `tests/`                          | Pest testing: architecture tests (`arch()`), datasets, Sanctum abilities, soft-delete asserts, allowlisted fakes |
 | `tests/Architecture/`             | What belongs in `arch()` tests: structural-only, the naming/type/layering coverage matrix, `->ignoring()` discipline |
 | `tests/Feature/`                  | The default test type: full-stack HTTP/Livewire/console, allow+deny boundaries, fake external I/O, shape-not-strings |
 | `tests/Unit/`                     | Genuinely isolated logic only: no DB/HTTP/container, no `RefreshDatabase`, when NOT to use a unit test |
+
+Empty `bootstrap/`, `public/`, and `storage/` directories exist only so the tree mirrors the Laravel skeleton for path-aligned installs; they ship no rules.
 
 ## Verify (maintainers)
 
@@ -119,7 +122,7 @@ Structural acceptance checks for this ruleset:
 
 ## Versioning
 
-Releases are tagged. Pin with `leek/laravel-agent-rules@v0.15.0` if you want reproducible installs.
+Releases are tagged. Pin with `leek/laravel-agent-rules@v0.16.0` if you want reproducible installs.
 
 ## License
 

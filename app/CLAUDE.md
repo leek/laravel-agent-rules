@@ -139,7 +139,10 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Event        | `app/Events/`                   |
 | Exception    | `app/Exceptions/`               |
 | Factory      | `database/factories/`           |
+| Feature (Pennant) | `app/Features/`            |
 | Job          | `app/Jobs/`                     |
+| Listener     | `app/Listeners/`                |
+| Livewire     | `app/Livewire/`                 |
 | Mail         | `app/Mail/`                     |
 | Middleware   | `app/Http/Middleware/`          |
 | Migration    | `database/migrations/`          |
@@ -149,6 +152,7 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Policy       | `app/Policies/`                 |
 | Provider     | `app/Providers/`                |
 | Request      | `app/Http/Requests/`            |
+| Resource (API) | `app/Http/Resources/`         |
 | Rule         | `app/Rules/`                    |
 | Scope        | co-located with model / query   |
 | Seeder       | `database/seeders/`             |
@@ -156,3 +160,4 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | State        | `app/States/`                   |
 | Support      | `app/Support/`                  |
 | Test         | `tests/`                        |
+| View Component | `app/View/Components/`        |

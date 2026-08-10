@@ -10,9 +10,9 @@
 
 - **SHOULD** wrap a single Action — the job is the queue boundary; the Action is the logic.
 - **MUST** be idempotent or safe to retry.
-- **MUST** declare failure handling: a `failed(Throwable $e)` method that logs context (job id, model id, message); never silently swallow.
-- **MUST** set retry policy: `$tries`, `$backoff`, `$timeout`, `$maxExceptions`.
-- **SHOULD** prefer an array `$backoff` for exponential retries: `public int|array $backoff = [60, 120, 300];`
+- **MUST** be intentional about failure — either declare a retry/failure policy on the job or accept framework defaults deliberately. Never silently swallow unrecoverable errors.
+- **MUST** implement `failed(Throwable $e)` when the job has side effects worth ops attention (charges, emails, external writes) — log context (job id, model id, message). One-shot internal jobs may omit it.
+- **SHOULD** set `$tries`, `$backoff`, and `$timeout` for jobs that call external I/O or may hang. Prefer an array `$backoff` for exponential retries: `public int|array $backoff = [60, 120, 300];`. Use `$maxExceptions` when you need a different budget for exception-driven failures vs total attempts.
 
 ## Dispatching inside a DB transaction
 
@@ -69,101 +69,17 @@ public function middleware(): array
 }
 ```
 
-## Rate limiting external calls
+## Rate limiting, batches, and retries (cheatsheet)
 
-```php
-public function middleware(): array
-{
-    return [(new RateLimited('mailgun'))->releaseAfterOneMinute()];
-}
-```
-
-For Redis-backed throttling inside the handler:
-
-```php
-Redis::throttle('stripe')->allow(10)->every(60)->then(
-    fn () => $this->callStripe(),
-    fn () => $this->release(10),
-);
-```
-
-## Batches and chains
-
-- **`Bus::batch([...])`** — parallel jobs needing aggregate completion (`then`/`catch`/`finally`).
-- **`Bus::chain([...])`** — ordered jobs where each depends on the previous.
-- **MUST** add the `Illuminate\Bus\Batchable` trait to jobs that run inside `Bus::batch([...])`.
-- Inside a batch job, guard with `if ($this->batch()?->cancelled()) return;` so cancelled batches stop cleanly.
-
-```php
-Bus::batch([
-    new ImportRowJob($a),
-    new ImportRowJob($b),
-])
-->then(fn (Batch $batch) => Log::info('done', ['id' => $batch->id]))
-->catch(fn (Batch $batch, Throwable $e) => report($e))
-->allowFailures()
-->dispatch();
-```
-
-```php
-final class ImportRowJob implements ShouldQueue
-{
-    use Batchable, Queueable, Dispatchable, InteractsWithQueue, SerializesModels;
-
-    public function handle(): void
-    {
-        if ($this->batch()?->cancelled()) {
-            return;
-        }
-        // ...
-    }
-}
-```
-
-## Conditional dispatch
-
-```php
-ProcessOrderJob::dispatchIf($order->isPaid(), $order);
-ProcessOrderJob::dispatchUnless($order->isCancelled(), $order);
-```
-
-## Time-bounded retries — `retryUntil()`
-
-Instead of a fixed `$tries`, expire retries at a wall-clock deadline:
-
-```php
-public function retryUntil(): DateTime
-{
-    return now()->addHours(2);
-}
-```
-
-## Short-circuiting — `$this->fail()`
-
-For unrecoverable errors (validation failure, missing prerequisite), call `$this->fail('msg')` to stop further retries without throwing:
-
-```php
-public function handle(): void
-{
-    if (! $this->order->paymentMethod) {
-        $this->fail('Order has no payment method — manual intervention required.');
-        return;
-    }
-    // ...
-}
-```
-
-## Repeated-exception backoff — `ThrottlesExceptions`
-
-When the same error keeps recurring (a downstream service flapping), back off retries instead of hammering:
-
-```php
-public function middleware(): array
-{
-    // After 3 exceptions, sleep 5 minutes before retrying
-    return [new ThrottlesExceptions(3, 5)];
-}
-```
+| Need | Use |
+| ---- | --- |
+| Cap external API rate | Job middleware `RateLimited('mailgun')`, or `Redis::throttle(...)->then(...)` in `handle` |
+| Parallel work + aggregate completion | `Bus::batch([...])->then(...)->catch(...)->dispatch()`; job **MUST** `use Batchable` and guard `if ($this->batch()?->cancelled()) return;` |
+| Ordered sequential work | `Bus::chain([...])` |
+| Conditional dispatch | `dispatchIf` / `dispatchUnless` |
+| Wall-clock retry budget | `retryUntil(): DateTime` instead of fixed `$tries` |
+| Unrecoverable stop (no more retries) | `$this->fail('reason')` |
+| Downstream flapping | middleware `new ThrottlesExceptions(3, 5)` (exceptions → sleep minutes) |
 
 ## Idempotency — atomic claim pattern
 

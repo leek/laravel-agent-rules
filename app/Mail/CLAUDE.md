@@ -10,7 +10,7 @@
 
 - **MUST** use the modern Mailable API: `envelope(): Envelope`, `content(): Content`, `attachments(): array` — not the legacy `build()` method.
 - **MUST** pass data via constructor-promoted public properties — public properties are automatically available to the view.
-- **MUST** implement `ShouldQueue` for mail sent during a web request — SMTP calls are slow and block the response. If the mail references rows written in an open transaction, also see the `afterCommit` rules in `app/Jobs/CLAUDE.md`.
+- **MUST** implement `ShouldQueue` when the mailable is sent during a web or Livewire request — SMTP calls are slow and block the response. Mail already dispatched from a queued job/listener does not need another queue hop. If the mail references rows written in an open transaction, also see the `afterCommit` rules in `app/Jobs/CLAUDE.md`.
 - **PREFER** markdown mailables (`Content(markdown: ...)`) for transactional mail — consistent styling, free plain-text version.
 - **MUST** set subjects via `__()` (or a translated string built in `envelope()`); don't rely on the class-name-derived default — see i18n in `app/CLAUDE.md`.
 

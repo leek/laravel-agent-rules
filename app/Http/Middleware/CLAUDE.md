@@ -85,7 +85,7 @@ php artisan make:middleware HandleLocale
 ## Example
 
 ```php
-class HandleLocale
+final class HandleLocale
 {
     public function handle(Request $request, Closure $next): Response
     {

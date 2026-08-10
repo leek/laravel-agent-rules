@@ -9,7 +9,7 @@
 - **MUST** default to plain `wire:model` for form fields — defers until submit/action.
 - **SHOULD** use `wire:model.live` only when you genuinely need live sync (e.g. live-validation, dependent dropdowns).
 - **SHOULD** use `wire:model.live.debounce.300ms` for search/filter inputs (note: `.live` must come first; bare `.debounce` does nothing on a deferred model).
-- **SHOULD** use `wire:model.live.blur` when you want a single server roundtrip on blur. **In v4.1+, bare `.blur` (and `.change`) only control client-side state syncing — you must prefix `.live` to trigger a network request.**
+- **SHOULD** use `wire:model.live.blur` when you want a single server roundtrip on blur. **In Livewire 4, bare `.blur` (and `.change`) only control client-side state syncing — you must include `.live` to trigger a network request** (e.g. `wire:model.live.blur`).
 - **SHOULD** use `wire:model.live.change` on `<select>` when you want a server roundtrip on option change rather than blur.
 
 ```blade
@@ -173,24 +173,6 @@ public string $value = '';
 // parent
 <livewire:custom-input wire:model="title" />
 ```
-
-## Auto-save patterns
-
-- `updated()` fires on every field change — add server-side throttling (timestamp comparison) to prevent write storms during fast typing.
-- **AVOID** `$model->refresh()` in auto-save paths — unnecessary `SELECT` every save. Only refresh on explicit user actions.
-- Use dirty-field tracking: compare current data to last-saved snapshot, skip the DB write when nothing changed.
-
-## Event chain contract
-
-- When dispatching events, verify ALL dependent components listen and re-query. List listeners explicitly via `#[On]` so the contract is greppable.
-
-## Double-refresh
-
-- **AVOID** redundant event dispatch (e.g. calendar date change + separate refresh event). One event, one re-query.
-
-## Filter propagation
-
-- Filter changes must propagate to all dependent UI panels. Test each panel after changing a filter.
 
 ## DOM morphing
 

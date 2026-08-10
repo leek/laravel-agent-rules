@@ -16,7 +16,7 @@
 ## Example
 
 ```php
-class VerifyUserAction
+final class VerifyUserAction
 {
     public function run(User $user): void
     {
