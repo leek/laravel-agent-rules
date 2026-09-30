@@ -1,0 +1,18 @@
+{
+    "name": "leek/laravel-agent-rules-verification",
+    "description": "Runtime checks for the rule examples; not an application dependency",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^12.0 || ^13.0",
+        "laravel/pennant": "^1.0",
+        "fakerphp/faker": "^1.24",
+        "phpunit/phpunit": "^12.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0"
+    },
+    "config": {
+        "allow-plugins": false
+    }
+}

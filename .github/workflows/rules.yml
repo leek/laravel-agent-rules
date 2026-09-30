@@ -1,0 +1,23 @@
+name: Verify rule examples
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        laravel: ['12.*', '13.*']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite
+          tools: composer:v2
+      - run: composer require --working-dir=.github/verification --no-interaction --no-progress "laravel/framework:${{ matrix.laravel }}"
+      - run: python3 .github/verification/references.py
+      - run: php .github/verification/run.php

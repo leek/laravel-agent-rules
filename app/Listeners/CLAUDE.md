@@ -34,7 +34,7 @@ public function handle($event): void { /* ... */ }
 public function handle(OrderPlaced $event): void { /* ... */ }
 ```
 
-- **MUST NOT** also call `Event::listen(OrderPlaced::class, SendOrderConfirmation::class)` in `EventServiceProvider` — double registration fires the listener twice (silent duplicate side effects).
+- **MUST NOT** also register an auto-discovered listener with `Event::listen(...)` in a provider — double registration fires it twice. The modern skeleton has no application `EventServiceProvider`; manual registrations belong in `AppServiceProvider::boot()` when discovery is not used.
 
 Verify what's actually registered:
 

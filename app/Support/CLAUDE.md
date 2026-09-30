@@ -79,11 +79,9 @@ For repeat detection inside a short time window (page views, QR scans, resend bu
 ```php
 $key = "qr_scan:{$property->id}:{$request->ip()}";
 
-if (Cache::has($key)) {
+if (! Cache::add($key, true, now()->addMinutes(30))) {
     return;
 }
-
-Cache::put($key, true, now()->addMinutes(30));
 ```
 
 ## Environment-aware caching
@@ -92,7 +90,7 @@ For cache around developer-edited content (translations, markdown, config-driven
 
 ## Tags
 
-`Cache::tags(['posts', "user:{$id}"])->...` — **only works on `redis` and `memcached` drivers**. Don't use with `database` / `file` / `array` stores.
+`Cache::tags(['posts', "user:{$id}"])->...` requires a taggable store. Redis, Memcached, and the in-memory array store support tags; database and file stores do not. Check the configured store before selecting a tagging strategy. The array store is process-local, so it cannot coordinate cache state across workers.
 
 ## Null results
 
@@ -108,6 +106,6 @@ For cache around developer-edited content (translations, markdown, config-driven
 public function saved(Post $post): void
 {
     Cache::forget("post:{$post->id}:render");
-    Cache::tags(["user:{$post->user_id}"])->flush();
+    Cache::forget("user:{$post->user_id}:posts");
 }
 ```

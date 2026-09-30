@@ -44,7 +44,7 @@ final class StripeService implements PaymentGateway
 {
     public function __construct(private readonly StripeClient $client) {}
 
-    public function charge(Money $amount, string $token): Charge { /* ... */ }
+    public function charge(MoneyValue $amount, string $token): Charge { /* ... */ }
 }
 
 final class GeocodingService

@@ -36,7 +36,7 @@ DB::transaction(function () use ($order) {
 });
 ```
 
-Alternatively, set `public bool $afterCommit = true;` on the job class to default every dispatch.
+Alternatively, call `$this->afterCommit()` in the constructor of a job using `Queueable` to default every dispatch. Do not redeclare the trait's `$afterCommit` property with a type.
 
 ## Uniqueness — `ShouldBeUnique`
 
@@ -65,9 +65,13 @@ Use when concurrent runs of the same job against the same resource are unsafe (m
 ```php
 public function middleware(): array
 {
-    return [new WithoutOverlapping($this->order->id)];
+    return [(new WithoutOverlapping((string) $this->order->id))
+        ->releaseAfter(30)
+        ->expireAfter(180)];
 }
 ```
+
+Choose delays for the workload: the expiry must exceed the job's maximum runtime. Overlapping jobs are released and consume attempts; budget `$tries` or `retryUntil()` accordingly. Use `dontRelease()` only when discarding an overlap is intentional.
 
 ## Rate limiting, batches, and retries (cheatsheet)
 
@@ -79,7 +83,7 @@ public function middleware(): array
 | Conditional dispatch | `dispatchIf` / `dispatchUnless` |
 | Wall-clock retry budget | `retryUntil(): DateTime` instead of fixed `$tries` |
 | Unrecoverable stop (no more retries) | `$this->fail('reason')` |
-| Downstream flapping | middleware `new ThrottlesExceptions(3, 5)` (exceptions → sleep minutes) |
+| Downstream flapping | middleware `new ThrottlesExceptions(3, 300)` (3 exceptions → throttle for 300 seconds); `backoff()` uses minutes |
 
 ## Idempotency — atomic claim pattern
 

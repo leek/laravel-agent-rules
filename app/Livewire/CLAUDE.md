@@ -2,6 +2,8 @@
 
 > Targets Livewire 4 (current major).
 
+These rules apply to class-based components under `app/Livewire/` and single-file / multi-file components under `resources/views/` (including `components/` and `pages/`). Read them explicitly when editing a view-based component.
+
 ## `wire:model` modifiers
 
 **`wire:model` is deferred by default** — sync happens on the next server request, not per keystroke (the default since v3; v2's per-keystroke binding is gone).
@@ -119,6 +121,14 @@ public int $userId;
 Mutating a locked property from the client throws.
 
 ## DOM morphing
+
+**MUST** give the root element of each iteration in a Livewire `@foreach` a stable, unique `wire:key`. Use the record's identity with a list-specific prefix, not its changing loop index. For nested Livewire components, pass a stable `:key` as well.
+
+```blade
+@foreach ($posts as $post)
+    <article wire:key="post-list-{{ $post->id }}">{{ $post->title }}</article>
+@endforeach
+```
 
 Use `wire:key` on both branches of `@if/@else` blocks with structurally different DOM trees — without keys, morphdom bleeds elements across states:
 

@@ -17,7 +17,7 @@
 ## Create
 
 ```bash
-php artisan make:command FetchUsers
+php artisan make:command FetchUsersCommand
 ```
 
 ## Example

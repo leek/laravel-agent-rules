@@ -99,9 +99,11 @@ For successful API mutations with no response body, **PREFER** `response()->noCo
 ```php
 public function destroy(User $user): Response
 {
-    $this->authorize('delete', $user);
+    Gate::authorize('delete', $user);
     $user->delete();
 
     return response()->noContent();
 }
 ```
+
+Import `Illuminate\Support\Facades\Gate`. The modern skeleton's base controller has no `authorize()` method; `$this->authorize()` requires explicitly adding `Illuminate\Foundation\Auth\Access\AuthorizesRequests` to the controller.

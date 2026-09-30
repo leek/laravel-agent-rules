@@ -28,7 +28,7 @@ public function __construct(private StripeClient $stripe) {}
 ```php
 interface PaymentGateway
 {
-    public function charge(Money $amount, string $token): Charge;
+    public function charge(MoneyValue $amount, string $token): Charge;
 }
 
 public function __construct(private PaymentGateway $gateway) {}

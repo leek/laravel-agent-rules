@@ -16,10 +16,9 @@
 - **SHOULD** cite the `CLAUDE.md` each rule enforces in a one-line comment above it — a reviewer can trace the rule to its source.
 - **MUST** treat a failing arch test as a real defect: either the code drifted (fix the code) or the rule changed (fix the rule). **Never** silence the suite or delete a rule to make CI green.
 - **MUST** use `->ignoring(...)` for deliberate, documented exceptions, each with a one-line reason comment (and a tracking note if it's a deferred rename). An un-commented `->ignoring()` is indistinguishable from hiding a bug.
-- **SHOULD** start from the presets, then layer the rules this ruleset adds on top.
+- **SHOULD** use the focused matrix below, and add compatible security/PHP presets after inspecting the installed Pest version. Do not enable `preset()->laravel()` wholesale: its `ServiceProvider` suffix, listener `handle()` requirement, and mandatory `ShouldQueue` mailables conflict with this ruleset. Copy only compatible expectations from that preset. Also inspect its `env()` and `App\Http` restrictions before adoption; configuration, routes, bootstrap, and tests need deliberate allowances.
 
 ```php
-arch()->preset()->laravel();   // framework naming + structure conventions
 arch()->preset()->security();  // flags eval, md5, mt_rand, extract, etc.
 arch()->preset()->php();       // flags debug-ish builtins
 ```
@@ -48,19 +47,21 @@ arch('mailables')->expect('App\Mail')->toHaveSuffix('Mail');
 **Naming — forbidden suffix/prefix:**
 
 ```php
-arch('models')->expect('App\Models')->not->toHaveSuffix('Model');
+arch('models')->expect('App\Models')->not->toHaveSuffix('Model')
+    ->ignoring(['App\Models\Scopes', 'App\Models\Builders']); // query helpers are not models
 arch('enums')->expect('App\Enums')->not->toHaveSuffix('Enum');
 arch('concerns')->expect('App\Concerns')->not->toHaveSuffix('Trait');
 arch('support')->expect('App\Support')->not->toHaveSuffix('Support');
 arch('events')->expect('App\Events')->not->toHaveSuffix('Event');
 arch('middleware')->expect('App\Http\Middleware')->not->toHaveSuffix('Middleware');
-arch('contracts')->expect('App\Contracts')->not->toHaveSuffix('Interface')->not->toHavePrefix('I');
+arch('contracts')->expect('App\Contracts')->not->toHaveSuffix('Interface');
 ```
 
 **Base type / shape:**
 
 ```php
-arch('models')->expect('App\Models')->toExtend('Illuminate\Database\Eloquent\Model');
+arch('models')->expect('App\Models')->toExtend('Illuminate\Database\Eloquent\Model')
+    ->ignoring(['App\Models\Scopes', 'App\Models\Builders']); // these implement Scope / extend Builder
 arch('enums')->expect('App\Enums')->toBeEnums();
 arch('contracts')->expect('App\Contracts')->toBeInterfaces();
 arch('concerns')->expect('App\Concerns')->toBeTraits();
@@ -78,8 +79,7 @@ arch('jobs')->expect('App\Jobs')->toHaveMethod('handle');
 // app/Support — stateless, framework-agnostic helpers (app/Support/CLAUDE.md)
 arch('support stays out of the HTTP layer')->expect('App\Support')->not->toUse('App\Http');
 
-// app/Data — DTOs are immutable and hold no Eloquent (app/Data/CLAUDE.md)
-arch('data is immutable')->expect('App\Data')->toBeReadonly();
+// app/Data — DTOs hold no Eloquent (app/Data/CLAUDE.md)
 arch('data holds no models')->expect('App\Data')->not->toUse('Illuminate\Database\Eloquent\Model');
 
 // app/Jobs — must not read request/session/auth state (it isn't there on a worker)
@@ -103,5 +103,53 @@ arch('no env outside config')
 ```
 
 ## When the rule isn't statically checkable
+
+For interface prefixes, reject the convention `I` followed by an uppercase letter (`IPaymentGateway`), not every name starting with `I` (`InvoiceGateway`, `IdempotencyStore`). For DTOs, check the class's own public properties rather than requiring a readonly class: Spatie's mutable `Data` base cannot be extended by a readonly class, but a subclass can declare readonly payload properties.
+
+```php
+function ruleClassesIn(string $directory): array
+{
+    $root = dirname(__DIR__, 2);
+    $path = $root . '/app/' . $directory;
+
+    if (! is_dir($path)) {
+        return [];
+    }
+
+    $classes = [];
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
+
+    foreach ($files as $file) {
+        if (! $file->isFile() || $file->getExtension() !== 'php') {
+            continue;
+        }
+
+        $relative = substr($file->getPathname(), strlen($root . '/app/'), -4);
+        $classes[] = new ReflectionClass('App\\' . str_replace(DIRECTORY_SEPARATOR, '\\', $relative));
+    }
+
+    return $classes;
+}
+
+test('contracts do not use the I interface prefix', function () {
+    foreach (ruleClassesIn('Contracts') as $class) {
+        expect(preg_match('/^I[A-Z]/', $class->getShortName()))->toBe(0);
+    }
+});
+
+test('data payload properties are readonly', function () {
+    foreach (ruleClassesIn('Data') as $class) {
+        foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            if ($property->getDeclaringClass()->getName() !== $class->getName()) {
+                continue; // framework-owned properties on Spatie Data are outside the payload
+            }
+
+            expect($property->isReadOnly())->toBeTrue();
+        }
+    }
+});
+```
+
+Keep this helper in one architecture test file (or a shared test helper), not repeated in every file. The example assumes PSR-4 `App\` classes under `app/`; adjust for the project's autoload mapping.
 
 Some `CLAUDE.md` rules need more than namespace/reflection (e.g. "a `*RelationManager` name must match its parent relation method", "migrations must be anonymous classes"). Write a small `test()` that tokenises / globs the source files rather than forcing it into an `arch()` chain — still no DB, still in this directory.

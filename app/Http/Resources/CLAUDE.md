@@ -72,6 +72,8 @@ Optional shared top-level keys (API version, deprecation) via `with(Request $req
 
 ## Project response envelope (optional convention)
 
+For a JSON:API contract, use first-party `Illuminate\Http\Resources\JsonApi\JsonApiResource` when available in the installed framework. Laravel 13 includes it, and it has also been backported to recent Laravel 12 releases; check the installed version rather than assuming every Laravel 12 release has it. See the [JSON:API resource API](https://api.laravel.com/docs/13.x/Illuminate/Http/Resources/JsonApi/JsonApiResource.html).
+
 Some APIs adopt an explicit envelope such as:
 
 ```json

@@ -2,6 +2,8 @@
 
 **Purpose:** reusable UI fragments without a PHP class. The Blade file itself is the component.
 
+Livewire 4 also places single-file and multi-file components here. Those use `app/Livewire/CLAUDE.md`; the `@props` and `<x-...>` rules below apply to anonymous Blade components, not Livewire components.
+
 ## Naming
 
 - `kebab-case.blade.php` (e.g. `alert.blade.php`, `forms/input.blade.php`).

@@ -74,15 +74,16 @@ public function update(User $user, Post $post): Response
 
 | Need | API |
 | ---- | --- |
-| Throw `AuthorizationException` | `Gate::authorize('update', $post)` / `$this->authorize('update', $post)` |
+| Throw `AuthorizationException` | `Gate::authorize('update', $post)` (`Illuminate\Support\Facades\Gate`) |
 | Boolean check | `Gate::allows('update', $post)`, `$user->can('update', $post)` |
 | Need denial message | `$response = Gate::inspect('update', $post); $response->allowed(); $response->message();` |
 
 ## Rules
 
 - **MUST NOT** inline ad-hoc checks (`if (auth()->id() !== $post->user_id) abort(403);`) — funnel through a policy.
-- **MUST** prefer route-level `->can('update', 'post')` middleware over a repeated `$this->authorize(...)` inside the controller action.
-- For abilities that are **not** model-bound (e.g. `view-horizon`, `access-billing`), **SHOULD** define them once with `Gate::define('view-horizon', ...)` in a provider and authorize with `$this->authorize('view-horizon')` / `->can('view-horizon')` — same as policies, not ad-hoc `if` trees.
+- **MUST** prefer route-level `->can('update', 'post')` middleware over a repeated `Gate::authorize(...)` inside the controller action.
+- For abilities that are **not** model-bound (e.g. `view-horizon`, `access-billing`), **SHOULD** define them once with `Gate::define('view-horizon', ...)` in a provider and authorize with `Gate::authorize('view-horizon')` / `->can('view-horizon')` — same as policies, not ad-hoc `if` trees.
+- `$this->authorize()` is available only on classes using `AuthorizesRequests` (such as Livewire components); the modern skeleton's base controller does not include that trait.
 - **SHOULD** test denial paths, not just allow paths.
 - **Auth boundary:** session web routes use `auth` + policies/`->can(...)`. Token API routes use Sanctum (`auth:sanctum`) and **MUST** assert abilities on ability-scoped endpoints (grant + deny) — see `tests/CLAUDE.md` and `tests/Feature/CLAUDE.md`. Never treat a bare authenticated user as authorized for every ability.
 

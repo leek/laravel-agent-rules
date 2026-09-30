@@ -19,7 +19,7 @@ Set `PENNANT_STORE=database` in `.env` (or `redis` for high-traffic).
 ### Closure feature (in `AppServiceProvider::boot()`)
 
 ```php
-Feature::define('new-checkout', function (?User $user): bool {
+Feature::define('new-checkout', function (?User $user): bool|Lottery {
     return match (true) {
         $user?->isInternal()         => true,
         $user?->isOnPlan('pro')      => Lottery::odds(1, 10),

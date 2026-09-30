@@ -1,2 +1,8 @@
 .DS_Store
 scripts/
+.github/verification/vendor/
+.github/verification/composer.lock
+.github/verification/fixture/bootstrap/cache/
+.github/verification/fixture/storage/
+.github/verification/fixture/app/
+.github/verification/fixture/tests/

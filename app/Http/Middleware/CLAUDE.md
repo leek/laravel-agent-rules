@@ -58,13 +58,14 @@ Register middleware in `bootstrap/app.php` via `withMiddleware(fn (Middleware $m
         EnsureUserHasRole::class . ':admin',
     ]);
 
-    $middleware->priority([
-        EncryptCookies::class,
-        StartSession::class,
-        // ...
-    ]);
+    $middleware->appendToPriorityList(
+        after: \Illuminate\Session\Middleware\StartSession::class,
+        append: HandleLocale::class,
+    );
 })
 ```
+
+Use `prependToPriorityList(before: ..., prepend: ...)` or `appendToPriorityList(after: ..., append: ...)` to position custom middleware while preserving framework ordering. `priority([...])` replaces the entire priority list; use it only when deliberately supplying a complete replacement.
 
 ## Rate-limiter definitions
 

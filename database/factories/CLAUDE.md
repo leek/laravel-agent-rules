@@ -11,6 +11,7 @@
 - **MUST** define every required column in `definition()`.
 - **SHOULD** use related factories for foreign keys (`'category_id' => Category::factory()`).
 - Models still need the `HasFactory` trait for `Model::factory()` — see `app/Models/CLAUDE.md`. **PREFER** `#[UseFactory]` only when pinning a non-conventional factory class (instead of overriding `newFactory()`).
+- Laravel 13 factories may use `#[UseModel(Product::class)]` from `Illuminate\Database\Eloquent\Factories\Attributes` to select a non-conventional model. Laravel 12 uses the factory's `$model` property. This is separate from the model's `#[UseFactory]` attribute.
 
 ```php
 use Illuminate\Database\Eloquent\Attributes\UseFactory;

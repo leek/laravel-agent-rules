@@ -62,7 +62,7 @@ php artisan make:test Actions/VerifyUserActionTest
 - **SHOULD** promote a helper to `tests/Pest.php` when it is useful across multiple files.
 
 ```php
-function asAdmin(): User
+function asAdmin(): Tests\TestCase
 {
     $user = User::factory()->create(['admin' => true]);
     return test()->actingAs($user);
@@ -79,15 +79,17 @@ For boundary/validation tests that vary only by inputs, **SHOULD** use a Pest da
 
 ```php
 it('rejects invalid emails', function (string $email) {
-    expect(fn () => User::factory()->create(['email' => $email]))
-        ->toThrow(ValidationException::class);
+    $validator = Validator::make(['email' => $email], ['email' => ['required', 'email:rfc']]);
+
+    expect($validator->fails())->toBeTrue();
 })->with([
     'empty'       => '',
     'no at sign'  => 'not-an-email',
-    'no tld'      => 'user@example',
     'spaces'      => 'a b@c.com',
 ]);
 ```
+
+Import `Illuminate\Support\Facades\Validator`. This checks validation rules in a Feature test with a booted app; use HTTP assertions against the actual Form Request endpoint when testing the request boundary. Factories persist attributes and do not perform request validation.
 
 ## Useful assertions
 

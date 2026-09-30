@@ -29,15 +29,15 @@ public function viaQueues(): array
 }
 ```
 
-## Transaction safety — `$afterCommit`
+## Transaction safety — `afterCommit()`
 
-When dispatching a notification from inside a DB transaction, mirror the Jobs rule:
+For a queued notification that depends on rows written inside a DB transaction, use `Queueable::afterCommit()`:
 
 ```php
-public bool $afterCommit = true;
+$user->notify((new InvoicePaid($invoice))->afterCommit());
 ```
 
-Without it, the worker can deliver before the parent transaction commits and observe missing rows.
+Alternatively, call `$this->afterCommit()` in the notification constructor. Do not redeclare `Queueable`'s `$afterCommit` property with a type. Without deferral, the worker can deliver before the parent transaction commits and observe missing rows. This only defers queued notifications (`ShouldQueue`), not synchronous delivery.
 
 ## Conditional delivery — `shouldSend()`
 

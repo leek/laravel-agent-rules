@@ -4,6 +4,8 @@
 
 > Component-specific rules live in `resources/views/components/CLAUDE.md` (anonymous) and `app/View/Components/CLAUDE.md` (class-based).
 
+For Livewire 4 single-file and multi-file components here, also read `app/Livewire/CLAUDE.md`. Livewire's component-owned PHP blocks and scoped asset files are supported exceptions to the ordinary Blade-only rules below.
+
 ## Naming
 
 - **MUST** name view files `kebab-case.blade.php` (`show-filtered.blade.php`, `user-profile.blade.php`) — not `showFiltered` or `show_filtered`.

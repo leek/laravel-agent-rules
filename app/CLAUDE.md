@@ -111,7 +111,7 @@ public function __construct(private readonly Mailer $mailer) {}
 
 ## Security (cross-cutting)
 
-- **MUST** authorize before acting — policies / `$this->authorize()` / route `->can(...)` before mutations or sensitive reads. Never trust a client-supplied id alone for ownership or tenancy.
+- **MUST** authorize before acting — policies / `Gate::authorize()` / route `->can(...)` before mutations or sensitive reads. `$this->authorize()` requires the `AuthorizesRequests` trait. Never trust a client-supplied id alone for ownership or tenancy.
 - **MUST** scope lookups to the authenticated boundary (tenant, owner, team) in queries and validation (`exists` / `unique` rules) — global scopes and policies do not automatically protect every query.
 - **MUST NOT** concatenate request input into SQL, shell commands, or raw cache/key fragments. Whitelist sorts, filters, and report dimensions with an enum or explicit map.
 - **MUST** read secrets only via `config(...)` (never `env()` outside `config/*.php`) — see `config/CLAUDE.md`.
@@ -158,7 +158,9 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Request      | `app/Http/Requests/`            |
 | Resource (API) | `app/Http/Resources/`         |
 | Rule         | `app/Rules/`                    |
-| Scope        | co-located with model / query   |
+| Scope        | `app/Models/Scopes/`            |
+| Eloquent builder | `app/Models/Builders/`       |
+| Query object | `app/Queries/`                  |
 | Seeder       | `database/seeders/`             |
 | Service      | `app/Services/`                 |
 | State        | `app/States/`                   |

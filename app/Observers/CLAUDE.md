@@ -47,12 +47,12 @@ php artisan make:observer UserObserver --model=User
 ```php
 public function saved(InvoiceItem $invoiceItem): void
 {
-    $invoiceItem->invoice()->recalculate();
+    $invoiceItem->invoice->recalculate();
 }
 
 public function creating(Order $order): void
 {
-    $order->state = OrderState::NEW;
+    $order->state = OrderState::New;
 }
 
 public function deleting(Order $order): void

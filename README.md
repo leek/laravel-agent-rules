@@ -1,10 +1,10 @@
 # laravel-agent-rules
 
-Directory-scoped agent rules for Laravel projects. Each `CLAUDE.md` lives next to the code it governs and mirrors the [laravel/laravel](https://github.com/laravel/laravel) skeleton — agents pick up the rules for whatever file you're editing.
+Directory-scoped agent rules for Laravel projects. Each `CLAUDE.md` lives next to the code it governs and mirrors the [laravel/laravel](https://github.com/laravel/laravel) skeleton. The root rules direct agents to shared conventions and any guidance outside the edited file's directory.
 
 ## Requirements
 
-- **Laravel 12+** (bootstrap `withMiddleware` / `withExceptions`, attribute model wiring, `casts()` method, schedule in `routes/console.php`).
+- **Laravel 12 or 13** (bootstrap `withMiddleware` / `withExceptions`, attribute model wiring, `casts()` method, schedule in `routes/console.php`). Laravel 12 requires PHP 8.2+; Laravel 13 requires PHP 8.3+. Version-specific examples are labeled; check the project's installed version before copying them. See [Laravel release notes](https://laravel.com/docs/13.x/releases).
 - **Pest** for new tests (`tests/CLAUDE.md`). PHPUnit-style assertions still work under Pest.
 - **Optional package dirs** — install rules only matter when the package is present:
   - `app/Livewire/` — Livewire 4
@@ -44,7 +44,7 @@ Every `CLAUDE.md` in this repo is the canonical source. The installer walks the 
 | `claude`  | `CLAUDE.md`               |
 | `codex`   | `AGENTS.md`               |
 | `gemini`  | `GEMINI.md`               |
-| `cursor`  | `.cursor/rules/*.mdc`     |
+| `cursor`  | `.cursorrules`            |
 | `windsurf`| `.windsurfrules`          |
 | `cline`   | `.clinerules`             |
 
@@ -60,7 +60,11 @@ database/migrations/AGENTS.md
 ...
 ```
 
-Each agent picks up the rules colocated with the file it's editing — no central rules file, no manual wiring. Subdirectory rules ship as separate files in their own subdirectories, not concatenated into the root.
+Subdirectory rules ship as separate files, not concatenated into the root. The root rule file instructs agents to read the cross-cutting `app/` rules for every project directory, and resolves canonical `CLAUDE.md` references to the selected agent's filename. The installer copies content unchanged; it does not rewrite references.
+
+Claude, Codex, and Gemini support hierarchical context files, subject to their context-loading settings. Do not assume every supported output filename has the same discovery behavior. The installer currently emits legacy `.cursorrules`, `.windsurfrules`, and `.clinerules` files rather than native glob-scoped rules. Verify the root loader is active and explicitly reads the relevant nested files. For automatic scoping, configure native rules using [Cursor project rules](https://docs.cursor.com/context/rules), [Windsurf rules or AGENTS.md](https://docs.windsurf.com/windsurf/cascade/memories), or [Cline conditional rules](https://docs.cline.bot/customization/cline-rules). Merely writing a legacy rule file into each subdirectory does not guarantee it is loaded.
+
+Laravel's optional directories need setup independently of installing agent rules: `php artisan install:api` creates API routing, `php artisan install:broadcasting` configures broadcasting, and `php artisan lang:publish` publishes language files. Install only the features the project needs.
 
 ## What you get
 
@@ -68,6 +72,9 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | --------------------------------- | --------------------------------------------------------- |
 | `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools, prefer `final`), IoC/DI, constants & i18n, security bullets, domain sub-namespacing, class-type → directory index |
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
+| `app/Models/Scopes/` / `app/Models/Builders/` | Global scope classes and custom Eloquent builders |
+| `app/Queries/`                    | Reusable query objects                                    |
+| `bootstrap/`                      | Routing, middleware, exception hooks, and provider registration |
 | `app/Enums/`                      | Backed enums: string backing, `casts()`, `Rule::enum()`, label methods |
 | `app/Casts/`                      | Custom Eloquent casts: value objects, `CastsAttributes`, inbound-only |
 | `app/Data/`                       | DTOs: `{Verb}{Model}Data` naming, immutable, built at the boundary (`toDto()`), plain vs `spatie/laravel-data` |
@@ -109,6 +116,12 @@ Each agent picks up the rules colocated with the file it's editing — no centra
 | `tests/Architecture/`             | What belongs in `arch()` tests: structural-only, the naming/type/layering coverage matrix, `->ignoring()` discipline |
 | `tests/Feature/`                  | The default test type: full-stack HTTP/Livewire/console, allow+deny boundaries, fake external I/O, shape-not-strings |
 | `tests/Unit/`                     | Genuinely isolated logic only: no DB/HTTP/container, no `RefreshDatabase`, when NOT to use a unit test |
+
+## Verification
+
+Run `python3 .github/verification/references.py` to check rule pointers and code fences. For the selected runtime examples, run `composer install --working-dir=.github/verification` then `php .github/verification/run.php`. The checks boot a complete Laravel fixture with isolated in-memory SQLite, exercising the admin helper through a real HTTP route as well as validation, Pennant, casts, route serialization, cache invalidation, and reflection rules. CI runs these checks separately on Laravel 12 and 13. Illustrative snippets with application-specific classes are not all standalone programs. Verification code lives under `.github/` so the installer excludes it from target applications.
+
+The [findings ledger](docs/findings-verification.md) records confirmed findings, qualifications, rejected claims, and their primary evidence.
 
 ## Versioning
 

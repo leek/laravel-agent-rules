@@ -12,7 +12,7 @@
 - **PREFER** named static constructors that capture context over raw `new` + string message:
 
 ```php
-final class CouldNotChargeCard extends Exception
+final class CouldNotChargeCardException extends Exception
 {
     public static function gatewayTimedOut(Order $order): self
     {
@@ -34,7 +34,7 @@ There is no `app/Exceptions/Handler.php` in the modern skeleton. Reporting and r
         // custom reporting — log technical detail here
     });
 
-    $exceptions->render(function (CouldNotChargeCard $e, Request $request) {
+    $exceptions->render(function (CouldNotChargeCardException $e, Request $request) {
         // Client payload: stable code + translated message — not $e->getMessage() or internal ids
         return response()->json([
             'message' => __('errors.payment_failed'),
@@ -59,5 +59,5 @@ There is no `app/Exceptions/Handler.php` in the modern skeleton. Reporting and r
 ## Create
 
 ```bash
-php artisan make:exception CouldNotChargeCard
+php artisan make:exception CouldNotChargeCardException
 ```

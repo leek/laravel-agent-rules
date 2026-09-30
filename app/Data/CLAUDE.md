@@ -9,7 +9,7 @@
 ## Rules
 
 - **MUST** be immutable — `readonly` promoted constructor properties, every property typed.
-- **MUST** contain only scalars, enums, other DTOs, or collections of those. **Never an Eloquent model instance** — a DTO that wraps a model is just the model, so pass the model directly.
+- **MUST** contain only scalars, enums, immutable value objects (including `CarbonImmutable` / `DateTimeImmutable`), other DTOs, or collections of those. Convert mutable Carbon dates with `->toImmutable()` at the boundary; readonly properties alone do not prevent mutation of contained objects. **Never an Eloquent model instance** — a DTO that wraps a model is just the model, so pass the model directly.
 - **MUST** build the DTO at the boundary: a Form Request's `toDto()` (see `app/Http/Requests/CLAUDE.md`) or a named static constructor (`fromArray()`, `fromModel()`). Actions and Jobs receive a finished DTO; they don't assemble one from request input.
 - **MUST NOT** put behavior with side effects here — no DB queries, no I/O, no dispatching. Read-only accessors computed purely from the DTO's own properties are fine.
 - **PREFER** a plain `readonly` PHP class. Reach for `spatie/laravel-data` only when you actually need its extras — validation, wrapping, casts, lazy properties, or TypeScript transformers. Don't pull a package in for a three-field struct.
@@ -50,12 +50,14 @@ Use when the DTO doubles as a validated request payload or an API response contr
 final class CreateOrderData extends Data
 {
     public function __construct(
-        public int $customerId,
+        public readonly int $customerId,
         /** @var OrderItemData[] */
-        public array $items,
-        public ?string $note = null,
+        public readonly array $items,
+        public readonly ?string $note = null,
     ) {}
 }
 ```
 
 > Value objects produced by custom casts (`app/Casts/CLAUDE.md`) also live here or in `app/Support/` — a DTO crosses a boundary, a value object models a single typed value.
+
+The money examples use `App\Support\MoneyValue` for the immutable value (integer `amount` in minor units plus `currency`; `fromCents(int, string)`, `toCents()`, and `roundedDollars()` for half-even rounding). `App\Casts\Money` is the Eloquent adapter, not the value object. Import the appropriate class at each call site.

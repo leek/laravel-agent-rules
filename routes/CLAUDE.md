@@ -7,6 +7,8 @@
 - **channels** — broadcasting (WebSockets)
 - **console** — Artisan command routes
 
+Fresh Laravel 12/13 applications ship `web.php` and `console.php`. Add API routing with `php artisan install:api` and broadcasting with `php artisan install:broadcasting` when needed; inspect their generated `bootstrap/app.php` wiring.
+
 ## Naming
 
 | Entity     | Pattern                          | Examples                                            |
@@ -16,14 +18,14 @@
 
 ## Rules
 
-- **MUST NOT** put business logic in route files. A route maps a URL to a controller, invokable, or single-action class — **AVOID** closures that contain logic beyond a one-line delegation (route caching breaks on closures, too).
+- **MUST NOT** put business logic in route files. A route maps a URL to a controller, invokable, or single-action class — **AVOID** closures that contain logic beyond a one-line delegation. Laravel 12/13 can serialize closure routes for route caching; controller delegation is a separation-of-concerns choice.
 - **MUST** keep URL segments lowercase. **MUST** use **plural** segments for resource collections (`/users`, `/orders/{order}`); singular or non-resource paths are fine for auth, settings, and one-off actions (`/login`, `/me`, `/settings`).
 - **MUST** give every route a name; use dot notation.
 - **MUST** group routes by entity, then nest middleware/prefix groups outside the entity group.
 - **SHOULD** prefer resource routes for CRUD: `Route::resource('users', UserController::class)`.
 - **SHOULD** use route-model binding (`/users/{user}`) over manual lookups.
-- **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship and prevents cross-tenant access.
-- **MUST** use a single parameter name that matches the bound model (`{conversation}` resolves to `Conversation`). Reusing a different name silently resolves to `null`.
+- **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship. Separately scope and authorize the parent against the authenticated tenant/owner; scoped child binding does not provide tenant authorization.
+- **MUST** match the route placeholder to the type-hinted argument name (`{conversation}` with `Conversation $conversation`). A mismatch skips implicit binding and can inject a fresh, unpersisted model through the container rather than the requested row; optional arguments may resolve to null.
 - **MUST** constrain free-form route parameters at the route boundary. Prefer typed helpers (`whereNumber()`, `whereUuid()`, `whereAlpha()`, `whereAlphaNumeric()`, `whereIn()`) over regex when they express the rule; invalid values should 404 before the controller runs.
 
 ## Example

@@ -15,7 +15,7 @@
 - **MUST NOT** redundantly set `$table`, `$primaryKey`, `$keyType`, `$incrementing`, `$connection`, `CREATED_AT`/`UPDATED_AT`, or explicit pivot / foreign-key names when Laravel's conventions already produce that exact value (convention over configuration). Configure only genuine exceptions — e.g. a `Pivot` subclass whose table isn't the singular default (see Gotchas).
 - **SHOULD** declare `$fillable` (or `$guarded = []` with care) — never leave mass-assignment unconfigured.
 - **MUST NOT** put columns that decide ownership, tenancy, or privilege into `$fillable` when those values can arrive from client input. Set them via relationship creates (`$user->projects()->create(...)`), `safe()->merge([...])` from the authenticated context, or an Action — never from a request allowlist the client controls.
-- **MUST** hide secrets and credentials from array/JSON serialization (`$hidden` / `#[Hidden([...])]` — e.g. passwords, tokens, API keys). **MUST NOT** treat model serialization as the public API contract — use API Resources for external JSON (see `app/Http/Resources/CLAUDE.md`).
+- **MUST** hide secrets and credentials from array/JSON serialization (`$hidden` in Laravel 12; `$hidden` or `#[Hidden([...])]` in Laravel 13 — e.g. passwords, tokens, API keys). **MUST NOT** treat model serialization as the public API contract — use API Resources for external JSON (see `app/Http/Resources/CLAUDE.md`).
 - **MUST** cast every date/time column via `casts()` (`'ordered_at' => 'datetime'`, or `'datetime:Y-m-d'` to pin a format) so it hydrates as a Carbon instance. **MUST NOT** store or pass dates as preformatted strings — keep Carbon objects throughout and format only in the display layer.
 - **SHOULD** declare casts for every other non-scalar column (enums, JSON, money / value objects). Use the `casts()` method — see below.
 - **SHOULD** use enums for finite state columns (`status`, `role`, `tier`) rather than free-form strings.
@@ -53,7 +53,7 @@ final class Project extends Model
 
 ## Casts and attributes
 
-**PREFER** the `casts()` method over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable`, `AsEnumCollection`, `AsCollection::of(...)`, `'json:unicode'`, `'asFluent'`.
+**PREFER** the `casts()` method over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable::class`, `AsEnumCollection::class`, `AsCollection::of(...)`, `'json:unicode'`, `AsFluent::class` (`Illuminate\Database\Eloquent\Casts\AsFluent`).
 
 ```php
 protected function casts(): array
@@ -68,8 +68,8 @@ protected function casts(): array
 protected function budgetCents(): Attribute
 {
     return Attribute::make(
-        get: fn (int $value) => Money::fromCents($value),
-        set: fn (Money $money) => $money->toCents(),
+        get: fn (int $value) => MoneyValue::fromCents($value, 'USD'),
+        set: fn (MoneyValue $money) => $money->toCents(),
     );
 }
 ```
@@ -108,6 +108,19 @@ final class Order extends Model
 | `#[UseEloquentBuilder]` | `newEloquentBuilder()` override |
 | `#[UseResource]` / `#[UseResourceCollection]` | Resource convention lookup |
 
+### Laravel 13 configuration attributes
+
+Laravel 12 uses model properties for these settings. In Laravel 13, **PREFER** the corresponding attributes from `Illuminate\Database\Eloquent\Attributes` when configuring an exception to conventions:
+
+| Attribute | Replaces |
+| --- | --- |
+| `#[Table('legacy_orders')]` | `$table` (also supports named key/type/timestamp options) |
+| `#[Fillable(['name', 'status'])]` | `$fillable` |
+| `#[Guarded(['id'])]` | `$guarded` |
+| `#[Hidden(['password', 'remember_token'])]` | `$hidden` |
+
+Keep ownership and privilege fields protected whichever form you use. These attributes are not available in Laravel 12.
+
 ## Relationships
 
 - **MUST** type-hint return types on relation methods (`BelongsTo`, `HasMany`, `MorphTo`, etc.).
@@ -134,6 +147,8 @@ protected function ownedBy(Builder $query, int $userId): void
 ```
 
 **MUST** push reusable / multi-condition query logic into a scope (or query object) rather than leaving it inline in a controller or Action.
+
+Place global scope classes in `app/Models/Scopes/`, custom builders in `app/Models/Builders/`, and query objects in `app/Queries/`. Domain subfolders may be used inside each. Local `#[Scope]` methods remain on the model. Apply the corresponding directory rules when adding a class.
 
 ### Query expression rules
 

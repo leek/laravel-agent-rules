@@ -61,13 +61,17 @@ protected function prepareForValidation(): void
 
 ## Cross-field validation — `after(): array`
 
-For business rules that need every standard rule to have passed first (and access to the validator), return closures from `after()`:
+`after()` callbacks run even when standard rules fail. Guard the validator's errors before using values that depend on successful validation. This example requires `start_at` and `end_at` to both have `required` and `date` rules:
 
 ```php
 public function after(): array
 {
     return [
         function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
             if ($this->date('start_at')->gte($this->date('end_at'))) {
                 $validator->errors()->add('end_at', __('validation.end_after_start'));
             }
