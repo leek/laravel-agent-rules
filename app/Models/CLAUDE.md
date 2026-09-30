@@ -18,6 +18,7 @@
 - **MUST** hide secrets and credentials from array/JSON serialization (`$hidden` in Laravel 12; `$hidden` or `#[Hidden([...])]` in Laravel 13 — e.g. passwords, tokens, API keys). **MUST NOT** treat model serialization as the public API contract — use API Resources for external JSON (see `app/Http/Resources/CLAUDE.md`).
 - **MUST** cast every date/time column via `casts()` (`'ordered_at' => 'datetime'`, or `'datetime:Y-m-d'` to pin a format) so it hydrates as a Carbon instance. **MUST NOT** store or pass dates as preformatted strings — keep Carbon objects throughout and format only in the display layer.
 - **SHOULD** declare casts for every other non-scalar column (enums, JSON, money / value objects). Use the `casts()` method — see below.
+- **MUST** hash passwords on every write. Prefer `'password' => 'hashed'` in `casts()`; if hashing is owned by the write boundary instead, use `Hash::make()` consistently. Request validation and mass-assignment allowlists do not hash values.
 - **SHOULD** use enums for finite state columns (`status`, `role`, `tier`) rather than free-form strings.
 
 ## Create
@@ -233,7 +234,8 @@ DB::transaction(function () use ($accountId, $amount): void {
 ## Large datasets & bulk writes
 
 - **MUST NOT** load large tables with `all()` / `get()`. **SHOULD** use `chunkById()` (stable under concurrent inserts) or `lazy()` for streaming.
-- For mass insert-or-update, **MUST** use `upsert()` instead of looping `firstOrCreate` / `updateOrCreate`:
+- For mass insert-or-update, **PREFER** `upsert()` when per-model lifecycle behavior is unnecessary and rows already contain storage-ready values. It skips model events, observers, and attribute setters/casts; use per-model writes when those are required.
+- **MUST** back `uniqueBy` with a matching primary/unique index on databases that require it (all supported engines except SQL Server). MySQL/MariaDB ignore `uniqueBy` and detect conflicts using the table's actual primary/unique indexes. Verify those indexes match the intended identity before bulk writes.
 
 ```php
 Order::query()->chunkById(500, fn (Collection $orders) => $orders->each->recompute());

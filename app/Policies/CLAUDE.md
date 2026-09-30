@@ -81,7 +81,8 @@ public function update(User $user, Post $post): Response
 ## Rules
 
 - **MUST NOT** inline ad-hoc checks (`if (auth()->id() !== $post->user_id) abort(403);`) — funnel through a policy.
-- **MUST** prefer route-level `->can('update', 'post')` middleware over a repeated `Gate::authorize(...)` inside the controller action.
+- **PREFER** route-level `->can('update', 'post')` for HTTP abilities when no Form Request owns authorization. If the Form Request calls the same policy in `authorize()`, that already guards the controller; choose one owner for the identical HTTP ability check. Use `Gate::authorize()` in a controller when neither boundary has enforced it. Keep the policy as the single source of the decision.
+- Livewire actions are separate subsequent requests: authorize initial access in `mount()` and authorize every sensitive action against current state, even when the initial page route was guarded.
 - For abilities that are **not** model-bound (e.g. `view-horizon`, `access-billing`), **SHOULD** define them once with `Gate::define('view-horizon', ...)` in a provider and authorize with `Gate::authorize('view-horizon')` / `->can('view-horizon')` — same as policies, not ad-hoc `if` trees.
 - `$this->authorize()` is available only on classes using `AuthorizesRequests` (such as Livewire components); the modern skeleton's base controller does not include that trait.
 - **SHOULD** test denial paths, not just allow paths.

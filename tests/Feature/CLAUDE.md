@@ -15,7 +15,7 @@
 ## Rules
 
 - **MUST** be the default. Reach for a Unit test only for genuinely isolated logic (see `tests/Unit/CLAUDE.md`); reach for an arch test only for structure.
-- **MUST** mirror the app's domain sub-namespacing in the path — a test for `App\Http\Controllers\Billing\InvoiceController` lives at `tests/Feature/Billing/InvoiceControllerTest.php`. See `app/CLAUDE.md`.
+- **MUST** mirror the source path under `app/`, including class type, audience/version, and domain — `App\Http\Controllers\Billing\InvoiceController` maps to `tests/Feature/Http/Controllers/Billing/InvoiceControllerTest.php`, while the API v1 variant maps to `tests/Feature/Http/Controllers/Api/V1/Billing/InvoiceControllerTest.php`. See `app/CLAUDE.md`.
 - **MUST** rely on the database refresh trait wired in `tests/Pest.php` (`RefreshDatabase` / `LazilyRefreshDatabase`) so each test starts from a clean schema — don't re-`use` it per file.
 - **MUST** assert behaviour and outcomes — persisted data, validation errors, redirects, dispatched jobs/notifications, side effects, record-level scoping/authorization. **MUST NOT** assert on presentation (layout, copy, labels, nav, element order, CSS classes); those are change-detectors.
 - **MUST** test both the allow **and** deny paths of every authorization boundary — a test that only proves the happy path leaves the lock untested.
@@ -25,5 +25,5 @@
 ## Create
 
 ```bash
-php artisan make:test Billing/InvoiceControllerTest
+php artisan make:test Http/Controllers/Billing/InvoiceControllerTest
 ```

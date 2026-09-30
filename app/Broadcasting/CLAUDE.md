@@ -89,3 +89,12 @@ final class OrderShipped implements ShouldBroadcast
 ```
 
 > Register channel name patterns in `routes/channels.php` (see Registration above). Route file roles are listed in `routes/CLAUDE.md`.
+
+When an event declares `broadcastAs()`, Echo must listen with a leading dot so it does not prepend the application's event namespace:
+
+```js
+Echo.private(`orders.${orderId}`)
+    .listen('.order.shipped', (event) => {
+        // Update the UI using the documented payload.
+    });
+```

@@ -145,6 +145,8 @@ Hard rules:
 
 Sub-minute frequencies: `everySecond()`, `everyTwoSeconds()`, `everyFiveSeconds()`, `everyTenSeconds()`, `everyThirtySeconds()`.
 
+In production, invoke `php artisan schedule:run` every minute via cron (or an equivalent scheduler service). With sub-minute events, Laravel keeps that invocation alive until the minute ends and repeats the due events; `schedule:work` is convenient locally. Dispatch queued jobs or background commands for slow sub-minute work, and run `schedule:interrupt` after deployment to stop an old invocation from continuing with old code.
+
 Dry-run a single task:
 
 ```bash

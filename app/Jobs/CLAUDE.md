@@ -57,6 +57,7 @@ final class ProcessPaymentJob implements ShouldQueue, ShouldBeUnique
 ```
 
 - Use `ShouldBeUniqueUntilProcessing` when duplicates only matter while the job is queued (lock releases once a worker picks it up).
+- **MUST** use a cache store that supports atomic locks for unique jobs, with a shared backend accessible to every dispatcher and worker. Process-local array caches cannot coordinate multiple processes. Configure `uniqueVia()` when the unique lock should use a different repository.
 
 ## No-overlap — `WithoutOverlapping`
 
@@ -87,7 +88,7 @@ Choose delays for the workload: the expiry must exceed the job's maximum runtime
 
 ## Idempotency — atomic claim pattern
 
-For "exactly-once" side effects against a row, **MUST** use an atomic conditional update and check the affected count rather than read-then-write:
+For an idempotent row transition, **MUST** use an atomic conditional update and check the affected count rather than read-then-write:
 
 ```php
 $affected = Order::query()
@@ -100,6 +101,8 @@ if ($affected === 0) {
     return;
 }
 ```
+
+This query bypasses model events, observers, and attribute setters/casts. Apply required domain effects explicitly after a successful claim, or use a transactional row lock plus a model `save()` when lifecycle hooks are required. The conditional update alone does not guarantee exactly-once external charges or messages; use provider idempotency keys or an outbox for those effects and account for failures between the claim and delivery.
 
 ## Queue selection
 

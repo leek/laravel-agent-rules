@@ -109,7 +109,7 @@ Cross-request options (`persist` / `cache` are **bools**; TTL is `seconds`, defa
 
 ## Tamper-proof properties — `#[Locked]`
 
-**MUST** mark any property that holds an authorization-relevant identifier (e.g. `$userId`, `$tenantId`) as `#[Locked]`. Public Livewire properties are otherwise client-mutable.
+**MUST** mark scalar properties that hold authorization-relevant identifiers (e.g. `$userId`, `$tenantId`) as `#[Locked]`. An Eloquent model property such as `public Post $post` has its identity protected by Livewire automatically; it does not need an additional `#[Locked]` for its model ID. Protection against tampering does not replace authorization in each action. See [Livewire's locked-property guidance](https://livewire.laravel.com/docs/4.x/attribute-locked).
 
 ```php
 use Livewire\Attributes\Locked;

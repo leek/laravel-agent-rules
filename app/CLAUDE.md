@@ -68,7 +68,7 @@ app/Jobs/SyncInvoiceToErp.php   ShipOrder.php   EscalateTicket.php
 - **Factories** resolve from the model namespace, so a domain-namespaced model looks up `Database\Factories\Billing\InvoiceFactory` — mirror the subfolder (see `database/factories/CLAUDE.md`).
 - **Migrations are the exception — keep them flat** (timestamp-ordered anonymous classes, not PSR-4; `migrate` ignores subfolders) — see `database/migrations/CLAUDE.md`.
 - **Filament resources are the other exception — group by model, not domain.** The layout is `app/Filament/Resources/{Models}/`; the domain axis there is a **Cluster** (`app/Filament/Clusters/{Domain}/Resources/...`), Filament's equivalent of domain sub-namespacing. Reuse the same domain name — `Billing/` here → a `Billing` cluster there. See `filament-agent-rules`.
-- **Tests** mirror the domain path (`tests/Feature/Billing/InvoiceControllerTest.php`).
+- **Tests** mirror the source path under `app/`, preserving class type, audience/version, and domain (`tests/Feature/Http/Controllers/Api/V1/Billing/InvoiceControllerTest.php`).
 
 ## Code style (cross-cutting)
 

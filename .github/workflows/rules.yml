@@ -11,13 +11,30 @@ jobs:
     strategy:
       matrix:
         laravel: ['12.*', '13.*']
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite
+          extensions: mbstring, pdo_sqlite, pdo_pgsql
           tools: composer:v2
       - run: composer require --working-dir=.github/verification --no-interaction --no-progress "laravel/framework:${{ matrix.laravel }}"
       - run: python3 .github/verification/references.py
       - run: php .github/verification/run.php
+      - run: php .github/verification/postgres.php
+        env:
+          PGHOST: 127.0.0.1
+          PGUSER: postgres
+          PGPASSWORD: verification

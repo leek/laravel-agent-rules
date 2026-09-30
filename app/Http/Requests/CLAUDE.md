@@ -8,7 +8,7 @@
 
 ## Rules
 
-- **MUST** return a real authorization decision from `authorize()` — do not leave `return true` if the route can be hit by users who shouldn't be allowed.
+- **MUST** ensure authorization is enforced before the controller runs. Prefer a policy decision in `authorize()` for a Form Request that owns the HTTP boundary. `return true` is appropriate only when equivalent policy authorization is deliberately enforced by route `->can(...)` middleware; document that ownership rather than duplicating the same ability check in the controller.
 - **SHOULD** delegate authorization to a Policy (`$this->user()?->can('create', Order::class) ?? false`) rather than inlining logic.
 - **SHOULD** keep validation rules colocated in `rules()`; do not validate ad-hoc in the controller.
 - **SHOULD** expose a `toDto()` method that returns a typed DTO when the action downstream expects structured input — keeps the action free of `$request->input(...)` calls.
@@ -102,11 +102,15 @@ When uniqueness must hold across more than one table, **SHOULD** stack multiple 
 ```php
 'email' => [
     'required',
-    'email:rfc,dns',
-    Rule::unique(User::class, 'email')->ignore($this->user()),
+    'email:rfc',
+    Rule::unique(User::class, 'email')->ignore($this->route('user')),
     Rule::unique(Invitation::class, 'email'),
 ],
 ```
+
+Here `{user}` is the route-bound User being edited. Use `$this->user()` only for a self-service operation where the authenticated user is explicitly the target. On creation, omit `ignore()`. Never supply client-controlled IDs directly to `ignore()`; take the authorized bound model.
+
+Use `email:rfc` as a syntax check. Add `dns` only when live DNS verification is a product requirement; it introduces network latency and requires deliberate handling in tests. DNS validation does not prove mailbox ownership or deliverability.
 
 ## Example with `toDto()`
 

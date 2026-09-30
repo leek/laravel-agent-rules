@@ -81,6 +81,8 @@ public function store(StoreUserRequest $request): JsonResponse
 }
 ```
 
+This password write requires the User model's `'password' => 'hashed'` cast (as in the Laravel skeleton). If the model does not provide it, hash explicitly with `Hash::make()` at the write boundary. Validation and `safe()` do not hash passwords; ensure every password-writing path uses the chosen mechanism.
+
 With an Action (non-trivial operation):
 
 ```php

@@ -11,19 +11,19 @@
 
 - **SHOULD** introduce an interface only when there is — or credibly will be — more than one implementation, or to break a hard dependency for testing. **AVOID** speculative single-implementation interfaces.
 - **MUST** keep interfaces small and segregated (ISP) — several focused contracts beat one fat one.
-- **MUST** type-hint the interface, never the concrete, at call sites and in constructors.
+- **MUST** type-hint the application interface at call sites when that abstraction exists and is bound. A service adapter may inject its concrete vendor SDK internally; callers depend on the application contract. Do not invent an interface solely to wrap a single SDK class.
 - **MUST** bind the interface to its implementation in a Service Provider's `register()` — see `app/Providers/CLAUDE.md`. Use `bind` for per-resolution, `singleton` for a shared instance.
 - **SHOULD** declare return types and `@throws` on every method so all implementations share one contract.
 
 ## Depend on the contract, not the concrete
 
-❌ Locked to one vendor; impossible to fake in a test:
+❌ A business Action bypassing an existing PaymentGateway contract and depending directly on its vendor:
 
 ```php
 public function __construct(private StripeClient $stripe) {}
 ```
 
-✅ Depend on the contract; bind the implementation once:
+✅ Business callers depend on the contract; bind the adapter implementation once (the adapter may inject StripeClient internally):
 
 ```php
 interface PaymentGateway

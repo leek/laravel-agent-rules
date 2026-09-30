@@ -9,6 +9,8 @@
 ## Channels
 
 - **MUST** declare delivery channels via `via($notifiable): array`. Common channels: `mail`, `database`, `broadcast`, `slack`, custom.
+- **MUST** implement `ShouldQueue` and use `Queueable` for notifications doing network delivery (mail, SMS, Slack, external custom channels) from web/Livewire requests. Database-only notifications may be synchronous. `viaQueues()` selects queues but does not enable queueing without `ShouldQueue`.
+- When already on a worker, choose the delivery boundary deliberately: a queued notification adds jobs; `Notification::sendNow()` delivers synchronously there when another queue hop is unnecessary. Do not use `sendNow()` to block a web request on external delivery.
 
 ```php
 public function via(object $notifiable): array

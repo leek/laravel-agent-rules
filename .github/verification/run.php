@@ -5,12 +5,14 @@ declare(strict_types=1);
 require __DIR__.'/vendor/autoload.php';
 require __DIR__.'/check.php';
 
+use App\Support\MoneyValue;
 use Faker\Generator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Cache\DatabaseStore;
 use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\Eloquent\Casts\AsFluent;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +26,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Pennant\Feature;
 use Laravel\Pennant\PennantServiceProvider;
@@ -141,6 +144,7 @@ $app['db']->connection()->getSchemaBuilder()->create('users', function (Blueprin
     $table->id();
     $table->boolean('admin')->default(false);
     $table->string('email')->nullable();
+    $table->string('password')->nullable();
 });
 
 class User extends Illuminate\Foundation\Auth\User
@@ -181,6 +185,38 @@ eval(snippet('tests/CLAUDE.md', 'function asAdmin'));
 eval('use Illuminate\\Support\\Facades\\Validator;'.snippet('tests/CLAUDE.md', "it('rejects invalid emails'"));
 check(User::factory()->create(['email' => ''])->email === '', 'Factory unexpectedly validated input.');
 
+$app['db']->connection()->getSchemaBuilder()->create('invitations', function (Blueprint $table): void {
+    $table->id();
+    $table->string('email');
+});
+$admin = auth()->user();
+$admin->update(['email' => 'admin@example.com']);
+$target = User::factory()->create(['email' => 'target@example.com']);
+class Invitation extends Model {}
+class_alias(User::class, 'App\\Models\\User');
+class_alias(Invitation::class, 'App\\Models\\Invitation');
+$emailRules = snippet('app/Http/Requests/CLAUDE.md', 'Rule::unique(User::class');
+eval('use Illuminate\\Validation\\Rule; use App\\Models\\User; use App\\Models\\Invitation; class EmailRequest extends \\Illuminate\\Foundation\\Http\\FormRequest { public function rules(): array { return ['.$emailRules.']; } }');
+$boundRoute = new Route('PUT', 'users/{user}', fn () => null);
+$boundRoute->bind(Request::create('/users/'.$target->id, 'PUT'));
+$boundRoute->setParameter('user', $target);
+$emailRequest = new EmailRequest;
+$emailRequest->setRouteResolver(fn () => $boundRoute);
+check(! Validator::make(['email' => $target->email], $emailRequest->rules())->fails(), 'Edited user was not excluded.');
+check(Validator::make(['email' => $admin->email], $emailRequest->rules())->fails(), 'Authenticated user was wrongly excluded.');
+
+class HashedUser extends User
+{
+    protected $table = 'users';
+
+    protected function casts(): array
+    {
+        return ['password' => 'hashed'];
+    }
+}
+$hashedUser = HashedUser::create(['password' => 'test-password']);
+check(Hash::check('test-password', $hashedUser->password), 'Password cast failed.');
+
 $after = snippet('app/Http/Requests/CLAUDE.md', 'public function after()');
 eval('use Illuminate\\Validation\\Validator; class DateRequest extends \\Illuminate\\Foundation\\Http\\FormRequest {'.$after.'}');
 foreach ([[], ['start_at' => 'nonsense', 'end_at' => '2026-09-30'],
@@ -208,6 +244,46 @@ class CastFixture extends Model
     }
 }
 check((new CastFixture(['settings' => ['enabled' => true]]))->settings->enabled === true, 'AsFluent failed.');
+
+eval('namespace App\\Support; final readonly class MoneyValue {
+    public function __construct(public int $amount, public string $currency) {}
+    public static function fromCents(int $amount, string $currency): self { return new self($amount, $currency); }
+    public function toCents(): int { return $this->amount; }
+    public function roundedDollars(): int { return (int) round($this->amount / 100, 0, PHP_ROUND_HALF_EVEN); }
+}');
+eval('namespace App\\Casts; use Illuminate\\Database\\Eloquent\\Model; use Illuminate\\Contracts\\Database\\Eloquent\\CastsAttributes;'.snippet('app/Casts/CLAUDE.md', 'final class Money'));
+eval('use App\\Casts\\Money; class PriceFixture extends \\Illuminate\\Database\\Eloquent\\Model { protected $guarded = []; '.snippet('app/Casts/CLAUDE.md', 'protected function casts()').'}');
+$price = new PriceFixture(['amount' => 1234, 'currency' => 'USD']);
+check($price->price->amount === 1234, 'Virtual price did not read amount.');
+$price->price = new MoneyValue(5678, 'EUR');
+check($price->getAttributes()['amount'] === 5678 && $price->getAttributes()['currency'] === 'EUR', 'Virtual price did not write both columns.');
+eval('use App\\Support\\MoneyValue;'.snippet('tests/Unit/CLAUDE.md', "it('rounds half to even'"));
+
+$app['db']->connection()->getSchemaBuilder()->create('bulk_products', function (Blueprint $table): void {
+    $table->id();
+    $table->string('sku')->unique();
+    $table->integer('price');
+});
+class BulkProduct extends Model
+{
+    protected $table = 'bulk_products';
+
+    protected $guarded = [];
+
+    public $timestamps = false;
+
+    protected function price(): Attribute
+    {
+        return Attribute::make(set: fn (int $value) => $value * 100);
+    }
+}
+$saves = 0;
+BulkProduct::saved(function () use (&$saves): void {
+    $saves++;
+});
+BulkProduct::create(['sku' => 'first', 'price' => 2]);
+BulkProduct::upsert([['sku' => 'first', 'price' => 3]], ['sku'], ['price']);
+check($saves === 1 && BulkProduct::where('sku', 'first')->value('price') === 3, 'Bulk write lifecycle semantics changed.');
 
 class QueueFixture
 {

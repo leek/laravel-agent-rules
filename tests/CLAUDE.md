@@ -24,7 +24,7 @@ Default test framework: [Pest](https://pestphp.com/). **Pest is required** for n
 
 - **Feature tests** are the default. They exercise the full stack and catch the largest class of regressions for the smallest amount of code. Place under `tests/Feature/` — see `tests/Feature/CLAUDE.md`.
 - **Unit tests** are used only for genuinely isolated logic (pure functions, complex calculations). Place under `tests/Unit/` — see `tests/Unit/CLAUDE.md`. **AVOID** unit tests that mock the framework just to bypass it.
-- **SHOULD** mirror the app's domain sub-namespacing in the test path — a test for `App\Http\Controllers\Billing\InvoiceController` lives at `tests/Feature/Billing/InvoiceControllerTest.php` (`make:test Billing/InvoiceControllerTest`). See `app/CLAUDE.md`.
+- **SHOULD** mirror the source path under `app/` in the test path, preserving class type, audience/version, and domain — `App\Http\Controllers\Billing\InvoiceController` maps to `tests/Feature/Http/Controllers/Billing/InvoiceControllerTest.php`; its `Api\V1\Billing` variant maps to `tests/Feature/Http/Controllers/Api/V1/Billing/InvoiceControllerTest.php`. See `app/CLAUDE.md`.
 - **Architecture tests** enforce structural rules with Pest's `arch()` — naming, layering, no debug leftovers. Place under `tests/Architecture/` — full matrix and rules in `tests/Architecture/CLAUDE.md`.
 
 ## How to write tests
