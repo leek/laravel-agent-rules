@@ -27,7 +27,7 @@ Generic caching rules. Apply wherever cache is touched — Support classes are a
 
 ## Cache key conventions
 
-- **MUST** use a structured key: `{entity}:{id}:{aspect}` (e.g. `user:42:profile`, `post:99:render`).
+- **MUST** use a structured key: `{entity}:{identity}:{aspect}` (e.g. `user:42:profile`, `post:99:render`). Use `all` for an aggregate without one record ID; a composite identity must include all dimensions that define sameness, normalized or hashed into one segment.
 - **MUST** prefix with a schema version when the cached payload's shape changes (e.g. `v2:user:42:profile`). Bumping the version invalidates the whole namespace without a manual flush.
 - **MUST** keep shared cache keys behind one named constant or method on the owning model / Support class when the key is used for both read and invalidation. Duplicating string literals in `remember()` and `forget()` creates silent stale-cache bugs.
 - **AVOID** dynamic, hard-to-invalidate keys (`user:42:posts:filtered:` + serialized filters) — prefer cache tags or fine-grained per-row caching.
@@ -35,7 +35,7 @@ Generic caching rules. Apply wherever cache is touched — Support classes are a
 ```php
 final class Product extends Model
 {
-    public const NAV_BADGE_CACHE_KEY = 'products:navigation_badge_count';
+    public const NAV_BADGE_CACHE_KEY = 'products:all:navigation_badge_count';
 }
 ```
 
@@ -44,7 +44,7 @@ final class Product extends Model
 For hot read paths, **PREFER** `Cache::flexible('key', [fresh, stale], fn)` over `remember()`. Returns stale data immediately while a background refresh runs — avoids the stampede when a popular key expires.
 
 ```php
-$config = Cache::flexible('billing:plans', [60, 300], function () {
+$config = Cache::flexible('billing:all:plans', [60, 300], function () {
     return BillingPlan::query()->orderBy('order_column')->get();
 });
 ```
@@ -54,7 +54,7 @@ $config = Cache::flexible('billing:plans', [60, 300], function () {
 For exclusive critical sections (one-shot imports, dedup, leader election), **MUST** use `Cache::lock` with `try/finally` release. Use `->block($seconds, fn)` to wait up to N seconds for the lock.
 
 ```php
-$lock = Cache::lock('import:orders', 60);
+$lock = Cache::lock('import:orders:lock', 60);
 
 try {
     $lock->block(5);
@@ -69,7 +69,7 @@ try {
 For values computed many times in a single request, **PREFER** `Cache::memo` over hitting Redis on every call:
 
 ```php
-$user = Cache::memo()->remember("user:{$id}", 60, fn () => User::find($id));
+$user = Cache::memo()->remember("user:{$id}:profile", 60, fn () => User::find($id));
 ```
 
 ## Short-lived repeat guards
@@ -77,7 +77,8 @@ $user = Cache::memo()->remember("user:{$id}", 60, fn () => User::find($id));
 For repeat detection inside a short time window (page views, QR scans, resend buttons), **PREFER** a short-lived cache key over a database existence query. The key should include every identity dimension that defines "same" and expire automatically.
 
 ```php
-$key = "qr_scan:{$property->id}:{$request->ip()}";
+$ipHash = hash('sha256', $request->ip() ?? 'unknown');
+$key = "qr_scan:{$property->id}.{$ipHash}:seen";
 
 if (! Cache::add($key, true, now()->addMinutes(30))) {
     return;

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -359,6 +360,97 @@ $middleware = new Middleware;
 $middleware->appendToPriorityList(after: StartSession::class, append: 'HandleLocale');
 check($middleware->getMiddlewarePriority() === [], 'Custom addition replaced default priority.');
 check($middleware->getMiddlewarePriorityAppends()['HandleLocale'] === StartSession::class, 'Priority addition missing.');
+
+foreach (['tenants', 'products', 'product_categories'] as $tableName) {
+    $app['db']->connection()->getSchemaBuilder()->create($tableName, function (Blueprint $table) use ($tableName): void {
+        $table->id();
+        if ($tableName !== 'tenants') {
+            $table->integer('tenant_id');
+        }
+        if ($tableName === 'product_categories') {
+            $table->integer('product_id');
+        }
+    });
+}
+class Tenant extends Model
+{
+    protected $guarded = [];
+
+    public $timestamps = false;
+
+    public static function factory(): TenantFactory
+    {
+        return TenantFactory::new();
+    }
+}
+class TenantFactory extends Factory
+{
+    protected $model = Tenant::class;
+
+    public function definition(): array
+    {
+        return [];
+    }
+}
+class Product extends Model
+{
+    protected $guarded = [];
+
+    public $timestamps = false;
+
+    public static function factory(): ProductFactory
+    {
+        return ProductFactory::new();
+    }
+
+    public function productCategories(): HasMany
+    {
+        return $this->hasMany(ProductCategory::class);
+    }
+}
+class ProductFactory extends Factory
+{
+    protected $model = Product::class;
+
+    public function definition(): array
+    {
+        return ['tenant_id' => Tenant::factory()];
+    }
+}
+class ProductCategory extends Model
+{
+    protected $guarded = [];
+
+    public $timestamps = false;
+
+    public static function factory(): ProductCategoryFactory
+    {
+        return ProductCategoryFactory::new();
+    }
+}
+class ProductCategoryFactory extends Factory
+{
+    protected $model = ProductCategory::class;
+
+    public function definition(): array
+    {
+        return ['tenant_id' => Tenant::factory()];
+    }
+}
+eval(snippet('database/factories/CLAUDE.md', '$tenant = Tenant::factory()'));
+check(Tenant::count() === 3, 'Nested factory example created the wrong number of tenants.');
+$recycledProduct = Product::latest('id')->firstOrFail();
+check($recycledProduct->tenant_id === $tenant->id && $recycledProduct->productCategories()->firstOrFail()->tenant_id === $tenant->id, 'Recycle did not propagate the shared parent.');
+Product::factory()->create(['tenant_id' => $tenant]);
+check(Tenant::count() === 3, 'Explicit parent override incorrectly created a tenant.');
+
+$property = (object) ['id' => 42];
+$request = Request::create('/');
+$processed = 0;
+$repeat = snippet('app/Support/CLAUDE.md', '$'.'ipHash = hash');
+eval('use Illuminate\\Support\\Facades\\Cache;'.$repeat.'$processed++;');
+eval('use Illuminate\\Support\\Facades\\Cache;'.$repeat.'$processed++;');
+check($processed === 1 && count(explode(':', $key)) === 3, 'Repeat guard or structured identity failed.');
 
 // Put the reflection example at its documented relative path in the isolated fixture.
 foreach (['app/Contracts', 'app/Data', 'tests/Architecture'] as $directory) {

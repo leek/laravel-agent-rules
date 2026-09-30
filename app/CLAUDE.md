@@ -31,7 +31,7 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 Group classes by **business domain** in a subfolder *inside* the class-type folder. This adds a domain axis on top of Laravel's default folders — you keep framework conventions and package compatibility while making the business domain obvious. It's the structured alternative to letting a folder fill up with unrelated classes (or inventing vague catch-alls like `Helpers` / `Utilities`, which this repo already replaces with typed homes).
 
 - **SHOULD** start flat. A class-type folder serving one domain stays flat (`app/Models/User.php`) — don't pre-create domain folders for a small app.
-- **MUST** group by domain subfolder as soon as a folder holds classes from **2+ distinct domains** — don't let a flat folder accumulate unrelated classes. (In practice this bites once a folder passes ~8 files.)
+- **MUST** group by domain subfolder when a folder holds classes from **2+ distinct business domains**. Domain count determines this convention, not a file-count threshold; several classes in one domain may remain flat.
 - **MUST** match the namespace to the directory (PSR-4) and pass the sub-path to `make:*`:
 
 ```bash

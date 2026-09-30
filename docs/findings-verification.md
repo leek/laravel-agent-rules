@@ -77,12 +77,26 @@ Paths in the tables refer to those snapshots. Documentation links supplement sou
 | T2-15 | Confirmed dependency; corrected | `Validation/Concerns/ValidatesAttributes::validateEmail()` constructs DNSCheckValidation for dns. DNS validation is supported, not inherently invalid; replaced default with RFC syntax check and made live DNS an explicit product requirement/test concern. |
 | T2-16 | Confirmed; corrected | Local controller rules preserve audience/version but test rules discarded them. Updated app/parent/Feature guidance to mirror the source path including class type, audience/version, and domain. |
 
+## Tier 3
+
+| ID | Disposition | Evidence and resulting change |
+| --- | --- | --- |
+| T3-01 | Confirmed; corrected | `Eloquent/Factories/Factory::expandAttributes()` converts supplied Model values to existing keys; only nested Factory values create/recycle parents. Replaced misleading foreign-key override example with nested factories and stated required default/relationship assumptions. |
+| T3-02 | Rejected | Local Enums rule asks for exhaustive display mappings (`label()` / `color()`), which the shown label satisfies. It does not forbid a default in predicates. Existing isFinal returns true for Shipped/Cancelled and false for remaining cases, correctly. No change made on the basis of an overstated prohibition. |
+| T3-03 | Confirmed; corrected | Local Support examples violated the prescribed three-part cache key shape. Standardized record/aggregate keys, explicit aspects, and hashed composite repeat identity across the examples. |
+| T3-04 | Confirmed wording defect; corrected | A constructor is public and Actions elsewhere recommend injection. Clarified one public operation plus an allowed constructor; helpers remain nonpublic. |
+| T3-05 | Confirmed ambiguity, not conflicting executable behavior; clarified | Local mandatory 2-domain threshold had an approximate 8-file aside. Removed file-count aside and explicitly retained the domain-count convention. No new forced restructure policy introduced. |
+| T3-06 | Confirmed contradiction; corrected | Feature rules banned all copy assertions while Mail recommended rendered content assertions. Added a business-contract exception for meaningful values/links, and narrowed Mail examples to invoice data rather than incidental prose/layout. |
+
 ## Verification commands
 
 ```sh
 python3 .github/verification/references.py
 composer install --working-dir=.github/verification --no-interaction --no-progress
 php .github/verification/run.php
+php .github/verification/postgres.php
 ```
 
-CI resolves each supported Laravel major separately. Runtime tests use isolated in-memory SQLite only; no application database is reset or modified. Tier commits are made only after their verification passes.
+CI resolves each supported Laravel major separately. Runtime tests use isolated in-memory SQLite; the PostgreSQL check issues read-only SELECT queries against derived rows. No application database is reset or modified. The PostgreSQL check uses standard PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD variables; CI supplies an isolated PostgreSQL service. Tier commits are made only after their verification passes.
+
+Final local verification passed on Laravel 12.69.3 and 13.34.0, PHP 8.4.22, and PostgreSQL 18.0. Pint passed on the explicit verification PHP paths; workflow YAML parsed and canonical references/code fences passed for all 48 rule files. Selected documented snippets were executed for the admin HTTP helper, validation datasets/after hooks, update uniqueness, Pennant, multi-column cast, observer access, factory recycling, repeat guards, and reflection rules. Additional checks exercised framework hashing, bulk lifecycle behavior, route binding/serialization, queue deferral, and cache-store support. These checks are deliberately scoped; they do not claim to run every illustrative application-specific fragment or a real agent's context loader.

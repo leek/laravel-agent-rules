@@ -58,14 +58,15 @@ final class ProductFactory extends Factory
 
 ## Recycle (shared relationship)
 
-**MUST** use `recycle()` when multiple nested factories share the same parent — otherwise each call creates a new parent row.
+**MUST** use `recycle()` when multiple nested factories should share one existing parent and their defaults create that parent via a factory. This example assumes both ProductFactory and ProductCategoryFactory define `'tenant_id' => Tenant::factory()`, and Product has a `productCategories()` relationship. Supplying an existing model or ID explicitly as a foreign-key value already reuses that row; it does not create another parent.
 
 ```php
 $tenant = Tenant::factory()->create();
 
 // AVOID — creates extra tenant rows via nested factories
-Product::factory()->create(['tenant_id' => $tenant]);
-ProductCategory::factory()->create(['tenant_id' => $tenant]);
+Product::factory()
+    ->has(ProductCategory::factory())
+    ->create();
 
 // PREFER — single tenant is reused everywhere
 Product::factory()

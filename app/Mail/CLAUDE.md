@@ -46,7 +46,7 @@ Mail::to($user)->send(new InvoicePaidMail($invoice));
 ## Testing
 
 - Use `Mail::fake()` + `Mail::assertSent()` / `assertQueued()` in feature tests (see the fakes section in `tests/CLAUDE.md`).
-- **SHOULD** test mailable content directly without sending: `(new InvoicePaidMail($invoice))->assertSeeInHtml(...)`.
+- **SHOULD** test required business content directly without sending: `(new InvoicePaidMail($invoice))->assertSeeInHtml($invoice->number)` or assertions for the invoice amount/action link. Avoid pinning incidental translated prose or layout; see `tests/Feature/CLAUDE.md` for the business-contract exception.
 
 ## Create
 
