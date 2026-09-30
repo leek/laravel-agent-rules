@@ -121,8 +121,6 @@ Laravel's optional directories need setup independently of installing agent rule
 
 Run `python3 .github/verification/references.py` to check rule pointers and code fences. For the selected runtime examples, run `composer install --working-dir=.github/verification` then `php .github/verification/run.php`. The checks boot a complete Laravel fixture with isolated in-memory SQLite, exercising the admin helper through a real HTTP route as well as validation, Pennant, casts, route serialization, cache invalidation, and reflection rules. CI runs these checks separately on Laravel 12 and 13. Illustrative snippets with application-specific classes are not all standalone programs. Verification code lives under `.github/` so the installer excludes it from target applications.
 
-The [findings ledger](docs/findings-verification.md) records confirmed findings, qualifications, rejected claims, and their primary evidence.
-
 ## Versioning
 
 Releases are tagged. Pin with `leek/laravel-agent-rules@v0.18.1` if you want reproducible installs.
