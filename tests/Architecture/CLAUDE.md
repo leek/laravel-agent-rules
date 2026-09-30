@@ -42,6 +42,8 @@ arch('services')->expect('App\Services')->toHaveSuffix('Service');
 arch('data')->expect('App\Data')->toHaveSuffix('Data');
 arch('channels')->expect('App\Broadcasting')->toHaveSuffix('Channel');
 arch('mailables')->expect('App\Mail')->toHaveSuffix('Mail');
+arch('queries')->expect('App\Queries')->toHaveSuffix('Query');
+arch('builders')->expect('App\Models\Builders')->toHaveSuffix('Builder');
 ```
 
 **Naming — forbidden suffix/prefix:**
@@ -62,6 +64,8 @@ arch('contracts')->expect('App\Contracts')->not->toHaveSuffix('Interface');
 ```php
 arch('models')->expect('App\Models')->toExtend('Illuminate\Database\Eloquent\Model')
     ->ignoring(['App\Models\Scopes', 'App\Models\Builders']); // these implement Scope / extend Builder
+arch('builders')->expect('App\Models\Builders')->toExtend('Illuminate\Database\Eloquent\Builder');
+arch('scopes')->expect('App\Models\Scopes')->toImplement('Illuminate\Database\Eloquent\Scope');
 arch('enums')->expect('App\Enums')->toBeEnums();
 arch('contracts')->expect('App\Contracts')->toBeInterfaces();
 arch('concerns')->expect('App\Concerns')->toBeTraits();

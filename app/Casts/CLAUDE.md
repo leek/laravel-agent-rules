@@ -19,13 +19,24 @@ use App\Support\MoneyValue;
 
 final class Money implements CastsAttributes
 {
-    public function get(Model $model, string $key, mixed $value, array $attributes): MoneyValue
+    public function get(Model $model, string $key, mixed $value, array $attributes): ?MoneyValue
     {
-        return new MoneyValue(amount: $attributes['amount'], currency: $attributes['currency']);
+        if (! isset($attributes['amount'], $attributes['currency'])) {
+            return null;
+        }
+
+        return new MoneyValue(amount: (int) $attributes['amount'], currency: $attributes['currency']);
     }
 
     public function set(Model $model, string $key, mixed $value, array $attributes): array
     {
+        if ($value === null) {
+            return [
+                'amount'   => null,
+                'currency' => null,
+            ];
+        }
+
         return [
             'amount'   => $value->amount,
             'currency' => $value->currency,
@@ -43,7 +54,7 @@ protected function casts(): array
 }
 ```
 
-`price` is a logical cast attribute backed by the `amount` and `currency` columns; it does not need a physical `price` column. Read `$model->price` to construct the value, and assign a MoneyValue to write both columns. Import `App\Casts\Money` in the model. This is Laravel's supported multi-column value-object cast pattern.
+`price` is a logical cast attribute backed by the `amount` and `currency` columns; it does not need a physical `price` column. Read `$model->price` to construct the value (or null when underlying columns are unset), and assign a MoneyValue (or null) to write both columns. Import `App\Casts\Money` in the model. This is Laravel's supported multi-column value-object cast pattern.
 
 ## Create
 

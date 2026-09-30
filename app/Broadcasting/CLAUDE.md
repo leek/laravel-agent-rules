@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('orders.{order}', OrderChannel::class);
 ```
 
-- Channel-name placeholders (`{order}`) are **route-model-bound exactly like routes** — type-hint the model in the auth method and Laravel resolves it. A name that doesn't match the parameter resolves to `null`.
+- Channel-name placeholders (`{order}`) are **route-model-bound** — match the placeholder to the type-hinted parameter name in the auth method (`join(User $user, Order $order)`) so Laravel resolves the model. A mismatched name skips implicit binding and passes the raw string parameter, causing a `TypeError` if typed with a model.
 
 ## Authorization
 

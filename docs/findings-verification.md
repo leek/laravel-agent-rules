@@ -88,6 +88,16 @@ Paths in the tables refer to those snapshots. Documentation links supplement sou
 | T3-05 | Confirmed ambiguity, not conflicting executable behavior; clarified | Local mandatory 2-domain threshold had an approximate 8-file aside. Removed file-count aside and explicitly retained the domain-count convention. No new forced restructure policy introduced. |
 | T3-06 | Confirmed contradiction; corrected | Feature rules banned all copy assertions while Mail recommended rendered content assertions. Added a business-contract exception for meaningful values/links, and narrowed Mail examples to invoice data rather than incidental prose/layout. |
 
+## Follow-up audit corrections
+
+| Scope | Disposition | Evidence and resulting change |
+| --- | --- | --- |
+| Broadcasting | Confirmed omission; corrected | `Broadcaster::resolveImplicitBindingIfPossible()` returns the raw channel string when parameters mismatch, resulting in a `TypeError` for model-typed parameters rather than resolving to `null`. Aligned `app/Broadcasting/CLAUDE.md` with `routes/CLAUDE.md`. |
+| Architecture matrix | Confirmed omission; corrected | Added `App\Queries` (`Query`), `App\Models\Builders` (`Builder` suffix and `Builder` base class), and `App\Models\Scopes` (`Scope` interface) to `tests/Architecture/CLAUDE.md`. |
+| Value-object casts | Confirmed robustness defect; corrected | Multi-column value object casts lacked nullable handling. Added null guards in `app/Casts/CLAUDE.md` and verified unset reading and writing in `run.php`. |
+| Test helper namespacing | Confirmed defect; corrected | `asAdmin(): Tests\TestCase` resolved relatively in namespaced test files. Updated to `\Tests\TestCase` in `tests/CLAUDE.md`. |
+| Test path keyword | Confirmed inconsistency; corrected | Aligned `tests/CLAUDE.md` to `MUST` to match `tests/Feature/CLAUDE.md`. |
+
 ## Verification commands
 
 ```sh

@@ -258,6 +258,10 @@ $price = new PriceFixture(['amount' => 1234, 'currency' => 'USD']);
 check($price->price->amount === 1234, 'Virtual price did not read amount.');
 $price->price = new MoneyValue(5678, 'EUR');
 check($price->getAttributes()['amount'] === 5678 && $price->getAttributes()['currency'] === 'EUR', 'Virtual price did not write both columns.');
+$nullPrice = new PriceFixture(['amount' => null, 'currency' => null]);
+check($nullPrice->price === null, 'Virtual price did not return null for unset values.');
+$nullPrice->price = null;
+check($nullPrice->getAttributes()['amount'] === null && $nullPrice->getAttributes()['currency'] === null, 'Virtual price did not write null columns.');
 eval('use App\\Support\\MoneyValue;'.snippet('tests/Unit/CLAUDE.md', "it('rounds half to even'"));
 
 $app['db']->connection()->getSchemaBuilder()->create('bulk_products', function (Blueprint $table): void {
