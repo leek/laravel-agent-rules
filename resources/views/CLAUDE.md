@@ -36,3 +36,19 @@ For Livewire 4 single-file and multi-file components here, also read `app/Livewi
 ```
 
 **MUST** wrap `@json` in **single** quotes — its output keeps literal `"` around every key/value, which would terminate a double-quoted attribute. (`@json` hex-escapes inner `'` via `JSON_HEX_APOS`, so single quotes stay safe.)
+
+## Directives inside component tags
+
+**MUST NOT** put Blade directives in the attributes of an `<x-…>` component tag (including package components such as `<x-filament::icon>`). The component tag compiler compiles only `{{ }}` echoes and the special-cased `@class(...)` / `@style(...)`. Any other directive (`@js`, `@json`, `@if`, …) reaches the browser as literal text. In an Alpine attribute that is a runtime `SyntaxError: Invalid or unexpected token`, yet the same attribute works on a plain HTML element, so review rarely catches it.
+
+❌ `@js` in a component attribute ships as the literal `@js($tip)`:
+
+```blade
+<x-icon name="pencil" x-tooltip="{ content: @js($tip) }" />
+```
+
+✅ Echo `Js::from()`. `Js` is `Htmlable`, so `{{ }}` emits the JavaScript literal unescaped:
+
+```blade
+<x-icon name="pencil" x-tooltip="{ content: {{ \Illuminate\Support\Js::from($tip) }} }" />
+```

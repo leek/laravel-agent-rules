@@ -471,4 +471,20 @@ foreach (['app/Contracts/InvoiceGateway.php', 'app/Data/PlainData.php', 'app/Dat
 file_put_contents($fixture.'/tests/Architecture/Rules.php', '<?php '.snippet('tests/Architecture/CLAUDE.md', 'function ruleClassesIn'));
 require $fixture.'/tests/Architecture/Rules.php';
 
+// Render both component-attribute examples through a registered component.
+if (! is_dir($fixture.'/storage/views')) {
+    mkdir($fixture.'/storage/views', 0777, true);
+}
+$app['config']->set('view.compiled', $fixture.'/storage/views');
+eval('namespace Rules\\Fixture; final class IconComponent extends \\Illuminate\\View\\Component { public function __construct(public string $name) {} public function render(): string { return \'<span {{ $attributes }}></span>\'; } }');
+Illuminate\Support\Facades\Blade::component(Rules\Fixture\IconComponent::class, 'icon');
+preg_match_all('/```blade\n(.*?)\n```/s', file_get_contents(dirname(__DIR__, 2).'/resources/views/CLAUDE.md'), $bladeBlocks);
+$tooltipBlocks = array_values(array_filter($bladeBlocks[1], fn ($block) => str_contains($block, 'x-tooltip')));
+check(count($tooltipBlocks) === 2, 'Expected the two component-attribute examples.');
+$tip = "Owner's note";
+$wrong = Illuminate\Support\Facades\Blade::render($tooltipBlocks[0], ['tip' => $tip]);
+$right = html_entity_decode(Illuminate\Support\Facades\Blade::render($tooltipBlocks[1], ['tip' => $tip]), ENT_QUOTES);
+check(str_contains($wrong, '@js($tip)'), 'Directive in a component attribute was unexpectedly compiled.');
+check(str_contains($right, 'x-tooltip="{ content: '.Illuminate\Support\Js::from($tip)->toHtml().' }"'), 'Js::from echo did not render the JavaScript literal.');
+
 echo 'Runtime examples passed on Laravel '.Application::VERSION.PHP_EOL;
