@@ -21,6 +21,7 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 - **MUST** declare migrations as **anonymous classes** (`return new class extends Migration { ... };`). Filename communicates intent; no named class needed.
 - **SHOULD** preserve column sorting on **MySQL/MariaDB** with `after('existing_column')` or `before('existing_column')`. Those modifiers are MySQL/MariaDB-only — omit them on Postgres, SQLite, and SQL Server (see `database/CLAUDE.md`).
 - **SHOULD** add `comment('...')` to any column whose name is not self-explanatory (legal/finance/regulatory terms, codes, project-specific jargon).
+- **MUST** restate every prior attribute on `->change()`: type, `nullable()`, `default()`, `unsigned()`, and `comment()`. `change()` replaces the full column definition, so any attribute you omit is dropped.
 - **SHOULD** declare an explicit `onDelete` policy on every foreign key (`cascade`, `restrict`, `set null`).
 - **MUST** make both `up()` and `down()` work, except where rollback is genuinely impossible (data migrations) — in that case, `down()` throws explicitly with a comment.
 

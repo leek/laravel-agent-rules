@@ -58,6 +58,7 @@ Order columns top-to-bottom as:
 - **MUST** add a composite index when multiple columns are queried together as a unit (and order columns to match the query).
 - **AVOID** indexes on low-cardinality columns alone (booleans, small enums) unless they are part of a selective composite.
 - **AVOID** redundant single-column indexes that are already covered by a composite index's leading column.
+- **MUST** keep index and constraint names at 63 characters or fewer. Laravel's generated names (`{table}_{columns}_{type}`) grow past that on long tables and composites. MySQL rejects names over 64 characters, and Postgres silently truncates them to 63, so two long names that share a prefix collide, and introspection such as `Schema::hasIndex()` sees only the truncated name. Pass an explicit short name as the last argument: `$table->index(['company_id', 'scheduled_at'], 'appts_company_scheduled_idx')`.
 
 ## UUIDs
 
