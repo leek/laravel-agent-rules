@@ -80,7 +80,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_id')->index()->constrained()->cascadeOnDelete();
             $table->string('status', 32)->index();
             $table->unsignedInteger('total_cents');
             $table->timestamps();
@@ -99,8 +99,8 @@ return new class extends Migration
 For **new** FK columns, **PREFER** `$table->foreignIdFor(Model::class)` over `$table->foreignId('col')->constrained('table')`:
 
 ```php
-$table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();                       // user_id
-$table->foreignIdFor(User::class, 'owner_id')->nullable()->constrained()->nullOnDelete();  // custom name
+$table->foreignIdFor(User::class)->index()->constrained()->cascadeOnDelete();                       // user_id
+$table->foreignIdFor(User::class, 'owner_id')->nullable()->index()->constrained()->nullOnDelete();  // custom name
 ```
 
 It resolves the column name and referenced table from `$model->getTable()`, so it survives table/model renames and stays tied to the model class.

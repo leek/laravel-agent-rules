@@ -52,7 +52,8 @@ Order columns top-to-bottom as:
 
 ## Indexes
 
-- **MUST** index foreign keys (Laravel's `foreignId()` / `foreignIdFor()` adds one automatically) and columns that enforce uniqueness.
+- **MUST** index columns that enforce uniqueness.
+- **MUST** index every foreign key column explicitly with `->index()`. `foreignId()` / `foreignIdFor()` / `constrained()` add only the constraint, never an index, and Postgres, SQLite, and SQL Server do not create one for you. On MySQL/InnoDB the explicit index replaces the one InnoDB would create, so it adds no duplicate. Skip `->index()` only when the column is already the leading column of a composite index (see the redundant-index rule below).
 - **SHOULD** add an index (or composite index) for filters, sorts, and joins that show up in real query paths — verify with `EXPLAIN` / slow-query logs rather than indexing every `WHERE`/`ORDER BY` column by habit.
 - **MUST** add a composite index when multiple columns are queried together as a unit (and order columns to match the query).
 - **AVOID** indexes on low-cardinality columns alone (booleans, small enums) unless they are part of a selective composite.
