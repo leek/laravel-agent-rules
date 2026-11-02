@@ -128,6 +128,31 @@ Class-wide form: put `#[WithoutRelations]` on the job class so every serialized 
 
 This only controls what is stored in the payload. It does **not** decide what happens when the model row is gone at run time — see missing-model handling below.
 
+## Payload compatibility across deploys
+
+Jobs queued before a deploy are unserialized into the new class **without running its constructor**, so a promoted constructor parameter's default is never applied. A typed property added that way stays uninitialized in every in-flight copy, and the first read throws `Typed property … must not be accessed before initialization`.
+
+- **MUST** declare a property added to an existing queued job as a class property with a default, and assign it in the constructor. Do not add it as a promoted parameter.
+- **MUST NOT** rename, remove, or retype a property until queued copies have drained: the longest delay plus the retry and backoff window. Keep the old property until then.
+- The same applies to queued listeners, notifications, and mailables.
+
+❌ Added as a promoted parameter. Copies queued before the deploy throw on `$this->force`:
+
+```php
+public function __construct(public Order $order, public bool $force = false) {}
+```
+
+✅ The class default survives unserialization:
+
+```php
+public bool $force = false;
+
+public function __construct(public Order $order, bool $force = false)
+{
+    $this->force = $force;
+}
+```
+
 ## Missing-model handling — `#[DeleteWhenMissingModels]`
 
 When the serialized model may be deleted between dispatch and execution, **MUST** drop the job instead of retrying forever on `ModelNotFoundException`:
