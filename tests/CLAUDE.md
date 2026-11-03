@@ -162,3 +162,11 @@ $payment = base_path('tests/fixtures/payment.xml');
 
 app(ProcessPaymentAction::class)->handle($payment, /* ... */);
 ```
+
+## Rules that keep tests honest
+
+- **MUST NOT** delete, weaken or shrink an assertion to make a test pass. Narrow the selector or the fixture so it still forbids the thing it was written to catch.
+- **MUST NOT** test decorative chrome (a badge's presence or count, an icon). Test authorization, routing and data behaviour.
+- **MUST** prove a regression at the production boundary: an HTTP request, Livewire or panel action, command, job, listener or notification, not a helper or presenter called directly. Confirm the test fails with the fix reverted.
+- **MUST NOT** use `->first()` on a `hasMany` collection when the relation holds several rows; collection order is not guaranteed. Target the specific row.
+- **MUST NOT** assert exact float types after a JSON round-trip. `json_encode` writes `0.0` as `0`, so a float in a `json`/`array`-cast column decodes as an `int`. Assert through an accessor that re-casts, or compare with `toEqual`.

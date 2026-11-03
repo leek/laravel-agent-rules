@@ -27,3 +27,7 @@
 ```bash
 php artisan make:test Http/Controllers/Billing/InvoiceControllerTest
 ```
+
+## Freeze the clock for relative wall-clock data
+
+A test that builds records as `date => today()` with times like `now()->addHours(2)->format('H:i:s')` wraps past midnight on a late-night run and flips any window logic. **MUST** pin the clock first, e.g. `$this->travelTo(today()->setTime(12, 0))` in `beforeEach`.

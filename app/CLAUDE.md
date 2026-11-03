@@ -167,3 +167,16 @@ Per-class-type naming rules are colocated with the directory that holds the clas
 | Support      | `app/Support/`                  |
 | Test         | `tests/`                        |
 | View Component | `app/View/Components/`        |
+
+## Default or fail
+
+When code can either fall back to a sane default or throw, **default** when a wrong value only changes how something looks: a display format, a label, an optional setting, a page size, a display timezone. A missing format should never take down a request.
+
+**Fail loudly instead** when a plausible-but-wrong value gets persisted, billed or grants access:
+
+- authorization and permission decisions (a default widens access, so fail closed)
+- tenant or owner scoping (an unscoped default leaks another tenant's data)
+- money, quantities, rates and anything billed
+- domain values a person will act on
+
+`config()` returns `mixed`, and `config('key', 'default')` uses the default **only when the key is absent**: a key that exists with a `null` value still returns `null`. Declare every config key in `config/*.php` with a real default, and guard the call site with `??` when a null would break the caller.

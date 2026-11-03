@@ -36,7 +36,7 @@ DB::transaction(function () use ($order) {
 });
 ```
 
-Alternatively, call `$this->afterCommit()` in the constructor of a job using `Queueable` to default every dispatch. Do not redeclare the trait's `$afterCommit` property with a type.
+Alternatively, call `$this->afterCommit()` in the constructor of a job using `Queueable` to default every dispatch. Never redeclare the trait's `$afterCommit` property (see **Never redeclare a `Queueable` property** below). For a `ShouldBeUnique` job, see **`->afterCommit()` does not defer a `ShouldBeUnique` lock**.
 
 ## Uniqueness — `ShouldBeUnique`
 
@@ -173,3 +173,15 @@ final class ProcessOrderJob implements ShouldQueue
     ) {}
 }
 ```
+
+## Never redeclare a `Queueable` property
+
+`Illuminate\Bus\Queueable` declares `$connection`, `$queue`, `$delay`, `$afterCommit`, `$middleware`, `$chained`, `$chainConnection`, `$chainQueue` and `$chainCatchCallbacks`. A class that redeclares one with a different type **or** a different default (`public bool $afterCommit = true;`, or the untyped `public $afterCommit = true;`) is a fatal error at class composition, so every dispatch, worker and test that loads it dies, often as a test run with no output. Use the trait's methods (`onQueue()`, `onConnection()`, `delay()`, `$this->afterCommit()`), the queue attributes, or a `middleware()` method. `$tries`, `$timeout`, `$backoff` and `$maxExceptions` are not on the trait, so declaring them is safe.
+
+## `->afterCommit()` does not defer a `ShouldBeUnique` lock
+
+On a `ShouldBeUnique` job, `dispatch($x)->afterCommit()` defers only the queue push: `PendingDispatch` acquires the unique lock when it is destructed, still inside the open transaction. Laravel releases that lock if the transaction rolls back, but while the first transaction is still open a concurrent, committed dispatch can see the lock and be silently discarded.
+
+- **MUST** defer the whole dispatch for a unique job written inside a transaction: `DB::afterCommit(fn () => SyncAccountJob::dispatch($accountId));`.
+- **MUST** build the payload before the closure and capture it. A key read inside the closure sees the model as it is at commit time, so two dispatches in one transaction collapse into one stale job.
+- **SHOULD** wrap this in a named static method on the job (`dispatchOnCommit()`) so callers cannot get it wrong. Outside a transaction `DB::afterCommit()` runs the closure immediately.

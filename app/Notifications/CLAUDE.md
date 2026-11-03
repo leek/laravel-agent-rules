@@ -79,3 +79,7 @@ A custom channel needs:
 
 1. A class with `send($notifiable, Notification $notification): void`.
 2. A `routeNotificationFor{Channel}()` method on the notifiable model returning the address/token.
+
+## Properties on a queued notification
+
+A queued notification is unserialized without its constructor running, so a property added after payloads are already on the queue stays uninitialized for them. **MUST** declare new properties outside the constructor with a default, **MUST NOT** make them `readonly` (a readonly property cannot have a default), and **SHOULD** make snapshot properties nullable and fall back to a live read when null. See **Payload compatibility across deploys** in `app/Jobs/CLAUDE.md`.

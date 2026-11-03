@@ -52,3 +52,9 @@ For Livewire 4 single-file and multi-file components here, also read `app/Livewi
 ```blade
 <x-icon name="pencil" x-tooltip="{ content: {{ \Illuminate\Support\Js::from($tip) }} }" />
 ```
+
+## Blade traps
+
+- **MUST NOT** open a `@php … @endphp` block after an inline `@php(...)` in the same file. Blade's block regex matches lazily from the first `@php` to the next `@endphp`, so everything between them becomes PHP and the view fails with "syntax error, unexpected token" on unrelated markup. Put variables in one block at the top, or use only inline `@php(...)`.
+- **MUST NOT** add a `title` attribute or tooltip that repeats the element's visible text. Add one only when it says something the element doesn't.
+- **MUST** escape the colon in attribute selectors used from JS: `document.querySelector('[wire:id]')` and `$el.closest('[x-on:click]')` **throw**, because `:` is invalid selector syntax, and the exception silently aborts the handler. Use `[wire\\:id]`, or for Livewire resolve the component through its JS API (`Livewire.find(id)`).

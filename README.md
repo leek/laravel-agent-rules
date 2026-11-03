@@ -105,6 +105,7 @@ Laravel's optional directories need setup independently of installing agent rule
 | `app/Providers/`                  | Container bindings (interface → implementation)           |
 | `config/`                         | `env()` / `config()` rules                                |
 | `routes/`                         | Routing, named routes, API versioning, scheduling (`routes/console.php`) |
+| `resources/css/`                  | Stylesheets: selector performance (`:has()` keyed on `style`) |
 | `resources/views/`                | Blade views: kebab-case naming, no inline JS/CSS, `@json`/`data-*`, no queries in views, dates formatted in the display layer |
 | `resources/views/components/`     | Anonymous Blade components: `@props`, `$attributes`, `@class`/`@style`/`@pushOnce`/`@fragment` |
 | `database/`                       | Schema, keys, indexes, table/column naming                |

@@ -57,3 +57,7 @@ php artisan make:provider PaymentProvider
 ```
 
 Register the provider in `bootstrap/providers.php`.
+
+## Macros live on the class that uses `Macroable`
+
+`Macroable` keeps its registry in a static property of the class that uses the trait. A subclass shares its parent's macros, but a class that uses `Macroable` again (a package subclass, or your own subclass that adds the trait) starts with an empty registry, and calling the parent's macro throws "Method ... does not exist". **MUST** register a macro on the class you actually call it on when anything between the base class and yours re-uses the trait, and register macros at provider `boot()`.
