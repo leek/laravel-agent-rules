@@ -11,6 +11,7 @@
 - **MUST** ensure authorization is enforced before the controller runs. Prefer a policy decision in `authorize()` for a Form Request that owns the HTTP boundary. `return true` is appropriate only when equivalent policy authorization is deliberately enforced by route `->can(...)` middleware; document that ownership rather than duplicating the same ability check in the controller.
 - **SHOULD** delegate authorization to a Policy (`$this->user()?->can('create', Order::class) ?? false`) rather than inlining logic.
 - **SHOULD** keep validation rules colocated in `rules()`; do not validate ad-hoc in the controller.
+- **MUST** make the rules as strict as the write they guard. Every `NOT NULL` column the request feeds is `required` or given a value before the write, and an `exists` rule applies the same eligibility filter the Action applies. Input that passes validation and then fails a database constraint or an Action guard answers 500 instead of 422. Add a feature test that posts the ineligible value and asserts 422.
 - **SHOULD** expose a `toDto()` method that returns a typed DTO when the action downstream expects structured input — keeps the action free of `$request->input(...)` calls.
 - **MUST** put user-facing validation messages through `__()` / lang files (or Laravel's default translated messages) — see `app/CLAUDE.md`.
 

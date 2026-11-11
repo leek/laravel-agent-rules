@@ -120,6 +120,8 @@ public int $userId;
 
 Mutating a locked property from the client throws.
 
+**MUST** also keep in a `#[Locked]` property any value the save path compares against, such as a suggested default shown when the form loaded. Recomputing the suggestion on save compares against the current database, not what the user saw: when another user changed the underlying data meanwhile, an untouched suggestion is saved as if chosen, or an unrelated save is rejected. Set the property on load, reset it whenever the record changes, and compare the submission against it.
+
 ## DOM morphing
 
 **MUST** give the root element of each iteration in a Livewire `@foreach` a stable, unique `wire:key`. Use the record's identity with a list-specific prefix, not its changing loop index. For nested Livewire components, pass a stable `:key` as well.
