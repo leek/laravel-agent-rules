@@ -27,7 +27,7 @@ npx apply-agent-rules apply leek/laravel-agent-rules
 npx apply-agent-rules apply leek/laravel-agent-rules --agents claude,codex
 
 # Pin to a release tag
-npx apply-agent-rules apply leek/laravel-agent-rules@v0.19.0 --agents claude
+npx apply-agent-rules apply leek/laravel-agent-rules@v0.19.1 --agents claude
 
 # Re-pull later, preserving local edits and pruning removed files
 npx apply-agent-rules update
@@ -124,7 +124,7 @@ Run `python3 .github/verification/references.py` to check rule pointers and code
 
 ## Versioning
 
-Releases are tagged. Pin with `leek/laravel-agent-rules@v0.19.0` if you want reproducible installs.
+Releases are tagged. Pin with `leek/laravel-agent-rules@v0.19.1` if you want reproducible installs.
 
 ## License
 
