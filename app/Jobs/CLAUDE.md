@@ -11,6 +11,7 @@
 - **SHOULD** wrap a single Action — the job is the queue boundary; the Action is the logic.
 - **MUST** be idempotent or safe to retry.
 - **MUST** be intentional about failure — either declare a retry/failure policy on the job or accept framework defaults deliberately. Never silently swallow unrecoverable errors.
+- **MUST** length-check strings that reach the job from outside without passing a FormRequest (a webhook payload, an imported file, an API response) against the column they are written to. PostgreSQL raises `value too long for type character varying(n)` instead of truncating, so the job fails every retry, after the sender was already told the delivery succeeded.
 - **MUST** implement `failed(Throwable $e)` when the job has side effects worth ops attention (charges, emails, external writes) — log context (job id, model id, message). One-shot internal jobs may omit it.
 - **SHOULD** set `$tries`, `$backoff`, and `$timeout` for jobs that call external I/O or may hang. Prefer an array `$backoff` for exponential retries: `public int|array $backoff = [60, 120, 300];`. Use `$maxExceptions` when you need a different budget for exception-driven failures vs total attempts.
 

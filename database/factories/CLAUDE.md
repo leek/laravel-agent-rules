@@ -114,5 +114,6 @@ public function configure(): static
 ## Defaults that keep tests deterministic
 
 - **MUST NOT** let a default randomly land in a terminal or blocking state (cancelled, lost, archived). A random status that blocks the flow under test fails a fraction of runs. Default to the ordinary active state and add a state method for the others.
+- **MUST** set an attribute explicitly in the test when the code under test needs it and the factory may leave it null (`fake()->optional()->phoneNumber()`). The test otherwise fails only on the runs where the factory draws null.
 - **MUST** compute an attribute that depends on another random attribute in a closure over the final attributes (`'is_mandatory' => fn (array $attributes) => $attributes['type'] === 'security'`), so a per-test override of the first re-derives the second.
 - **SHOULD** leave nullable foreign keys null instead of cascading factories for them; each cascade multiplies queries across the suite. Tests that need the relation set it explicitly.
