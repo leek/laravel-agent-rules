@@ -58,6 +58,7 @@ protected function prepareForValidation(): void
 ],
 ```
 
+- **MUST** add `->withoutTrashed()` to `Rule::exists()` on a soft-deleting table. The rule reads the table directly, so a trashed row passes validation and the write then fails or is dropped.
 - Prefer built-in conditional rules (`sometimes`, `required_if`, `exclude_if`, `Rule::when`, `Rule::enum`) over PHP `if` trees in `rules()`. See [Laravel validation docs](https://laravel.com/docs/validation) for the full rule list.
 
 ## Cross-field validation — `after(): array`

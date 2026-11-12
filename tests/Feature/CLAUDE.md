@@ -22,6 +22,15 @@
 - **SHOULD** cover, per endpoint: happy path, validation failure, authorization failure, and one edge case per branch.
 - **AVOID** mocking your own application classes — exercise them for real and mock only external boundaries (see parent for `Mail::fake` / `Http::fake` / Sanctum abilities / shape assertions).
 
+## Cases that catch drift
+
+Add these when the feature has the shape named; each one fails for a defect the happy path cannot see.
+
+- **Preview and write:** a feature with a preview (or dry-run) and a write path **MUST** have a parity test that runs both on the same fixtures and asserts the preview lists exactly what the write changes, including a row the write refuses.
+- **Undo and round-trip:** an undo, restore, or prefill-then-save operation **MUST** have a test that captures the full row and its child rows before, runs the operation and its inverse, and compares everything. Asserting only the field that moved misses the ones the snapshot forgot.
+- **Soft-deleted relation:** code that reads through a relation in a historical context (report, export, audit view, edit form showing a stored key) **MUST** have a case with the related row soft-deleted.
+- **Run it twice:** a seeder, backfill or one-time operation **MUST** have a test that runs it twice and asserts the second run changes nothing: no duplicates, no exception, same counts.
+
 ## Create
 
 ```bash

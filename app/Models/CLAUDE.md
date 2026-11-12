@@ -231,9 +231,21 @@ DB::transaction(function () use ($accountId, $amount): void {
 });
 ```
 
+The lock protects only what is read after it. **MUST** re-read and re-check under the lock anything decided before it — the full rule (JSON columns, sweeps, HTTP calls) is **Lock, re-read, then decide** in `app/CLAUDE.md`.
+
 ## Large datasets & bulk writes
 
-- **MUST NOT** load large tables with `all()` / `get()`. **SHOULD** use `chunkById()` (stable under concurrent inserts) or `lazy()` for streaming.
+- **MUST NOT** load large tables with `all()` / `get()`. **SHOULD** use `chunkById()` (stable under concurrent inserts) or `lazy()` for read-only streaming.
+- **MUST** use `chunkById()` / `eachById()` / `lazyById()` whenever the callback writes. `each()`, `chunk()` and `lazy()` on a builder page by offset: when the callback changes a column the query filters or orders by, or deletes the row, the remaining rows shift up and every other page is skipped without an error.
+
+```php
+// ❌ Each update removes a row from the filter, so page 2 starts 1,000 rows too far in.
+Subscription::query()->whereNull('paused_at')->each(fn (Subscription $subscription) => $subscription->pause());
+
+// ✅
+Subscription::query()->whereNull('paused_at')->eachById(fn (Subscription $subscription) => $subscription->pause());
+```
+
 - For mass insert-or-update, **PREFER** `upsert()` when per-model lifecycle behavior is unnecessary and rows already contain storage-ready values. It skips model events, observers, and attribute setters/casts; use per-model writes when those are required.
 - **MUST** back `uniqueBy` with a matching primary/unique index on databases that require it (all supported engines except SQL Server). MySQL/MariaDB ignore `uniqueBy` and detect conflicts using the table's actual primary/unique indexes. Verify those indexes match the intended identity before bulk writes.
 
@@ -253,6 +265,15 @@ Product::query()->upsert($rows, uniqueBy: ['sku'], update: ['price', 'name']);
 - **AVOID** soft-deleting reference/lookup data — hard delete or archive instead.
 - Restore with `$model->restore()` (fires the `restored` event), `restoreQuietly()` to skip events, or query-builder `restore()` on a `withTrashed()` query for bulk restores (no model events, like other mass operations).
 - **MUST** treat unique indexes carefully with soft deletes — a plain unique on `email` blocks re-creating a row after soft-delete. Prefer a partial/filtered unique (e.g. Postgres partial index `WHERE deleted_at IS NULL`, or a composite that includes a soft-delete sentinel the project standardizes on). Document the chosen approach in the migration.
+- **MUST** resolve the trashed row in historical and stored-key reads. A report, export, audit view, or the stored foreign key shown on an edit form must still resolve after the related row is trashed: use `withTrashed()` limited to that key, still inside the tenant boundary. The picker's options and the save-time lookup use the same query.
+
+```php
+$author = User::withTrashed()->find($entry->user_id);   // historical read: the author may have left
+```
+
+- **MUST** add the `deleted_at` predicate yourself wherever Eloquent does not: `DB::select()`, `selectRaw()` subqueries, and any `join()` onto a soft-deleting table — the joined table is unscoped even on an Eloquent query.
+- `Rule::exists()` / `exists:` reads the table directly and accepts trashed rows. **MUST** add `->withoutTrashed()` unless a trashed value is meant to pass.
+- `withoutGlobalScopes()` drops the soft-delete scope along with the one you meant to remove. Name the scope (`withoutGlobalScope(TenantScope::class)`) or add `whereNull('deleted_at')` back.
 
 ## Gotchas (silent failures)
 
@@ -260,6 +281,6 @@ Product::query()->upsert($rows, uniqueBy: ['sku'], update: ['price', 'name']);
 - **`HasUlids` / `HasUuids` does NOT change the primary key type.** The trait only auto-fills the columns returned by `uniqueIds()`. A model that overrides `uniqueIds(): array { return ['ulid']; }` keeps the bigint `id` as PK and only auto-generates a secondary `ulid` column. Before claiming a morph/FK column should be a string, check `uniqueIds()`, `$primaryKey`, `getKeyType()`, `$incrementing` — not the trait name. Route binding is independent (`getRouteKeyName()`).
 - **An accessor shadows a joined column of the same name.** When a model defines an attribute accessor (e.g. `first_name` proxying a `person` relation), a query that `->join(...)->select('people.first_name')` hydrates **null** on access — the accessor short-circuits the raw value. **MUST** read raw joined columns via `DB::table(...)` (or also `->with(...)` the relation) in seeders/reports/lookups; `Model::query()->select('joined.col')` is only safe for columns the model itself owns.
 - **`BelongsToMany` with `->withPivotValue('col', $value)` throws when eager-loaded.** Laravel news up a blank model to build the constraint → `The provided value may not be null`. Lazy access on a hydrated instance works, but `preventLazyLoading()` blocks that in dev/test. **MUST** query the pivot directly via a join instead of `->with('thatRelation')`. Note eager-load constraint closures receive a `Relation`, not a `Builder` — write `fn ($query) => $query->...`; don't type-hint the param as `Builder`.
-- **A soft-deleted parent makes a non-null `belongsTo` return null.** A NOT NULL foreign key or a non-null PHPDoc does not guarantee the relation resolves: when the related model uses `SoftDeletes` and the relationship has no `withTrashed()`, the trashed parent is hidden and the relation is `null`. **MUST** keep consumers null-safe and test with the related row soft-deleted.
+- **A soft-deleted parent makes a non-null `belongsTo` return null.** A NOT NULL foreign key or a non-null PHPDoc does not guarantee the relation resolves: when the related model uses `SoftDeletes` and the relationship has no `withTrashed()`, the trashed parent is hidden and the relation is `null`. **MUST** keep consumers null-safe and test with the related row soft-deleted. Where the read is historical, resolve the trashed row instead — see **Soft deletes**.
 - **A column named like a protected `Model` property reads the property, not the column.** Inside a model, `$related->changes` (or `attributes`, `original`, `relations`, `casts`) reads Eloquent's own protected property, because a sibling `Model` subclass may access it and `__get()` never runs. You silently get `[]`. **MUST** read such columns with `$related->getAttribute('changes')`.
 - **A generated slug must be unique in the same scope as its index.** When the unique index is composite (`(team_id, slug)`), the slug generator's uniqueness check **MUST** use the same scope, or it suffixes needlessly (global check) or collides (no check). Test the exact slug while the same slug already exists under another owner.

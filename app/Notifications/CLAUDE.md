@@ -82,6 +82,16 @@ A custom channel needs:
 
 **MUST NOT** keep per-send state on the channel instance (a resolved tenant, branding, a locale). `ChannelManager` builds each channel once and reuses it for every later notification in the process, so on a queue worker one send's state leaks into the next. Pass the value through the message or view data, or clear it in a `finally` after each send.
 
+## Snapshot what the notification describes
+
+A queued notification's model properties are re-fetched fresh when it is delivered. **MUST** capture as scalars in the constructor the values that describe the event (who did it, old and new value, the time), when that state can change before delivery. Otherwise a second change made before delivery is reported under the first actor, with the wrong values.
+
+```php
+public function __construct(public Booking $booking, public string $movedBy, public CarbonImmutable $movedTo) {}
+```
+
+Use the model only for routing and links.
+
 ## Properties on a queued notification
 
 A queued notification is unserialized without its constructor running, so a property added after payloads are already on the queue stays uninitialized for them. **MUST** declare new properties outside the constructor with a default, **MUST NOT** make them `readonly` (a readonly property cannot have a default), and **SHOULD** make snapshot properties nullable and fall back to a live read when null. See **Payload compatibility across deploys** in `app/Jobs/CLAUDE.md`.

@@ -95,7 +95,7 @@ For an idempotent row transition, **MUST** use an atomic conditional update and 
 $affected = Order::query()
     ->whereKey($this->order->id)
     ->whereNull('paid_at')
-    ->update(['paid_at' => now(), 'payment_id' => $this->paymentId]);
+    ->update(['paid_at' => $this->paidAt, 'payment_id' => $this->paymentId]);
 
 if ($affected === 0) {
     // Another worker won the race — already processed.
@@ -104,6 +104,23 @@ if ($affected === 0) {
 ```
 
 This query bypasses model events, observers, and attribute setters/casts. Apply required domain effects explicitly after a successful claim, or use a transactional row lock plus a model `save()` when lifecycle hooks are required. The conditional update alone does not guarantee exactly-once external charges or messages; use provider idempotency keys or an outbox for those effects and account for failures between the claim and delivery.
+
+## Time passes between dispatch and `handle()`
+
+A job runs seconds or hours after it was dispatched, and again on each retry. State it reads in `handle()` is the state at run time, not the state the dispatcher saw.
+
+- **MUST** carry the occurrence time in the constructor when the job records or evaluates when something happened. `now()` in `handle()` is the worker's clock: an event queued before a change is judged as if it happened after it.
+
+```php
+public function __construct(public readonly int $orderId, public readonly CarbonImmutable $occurredAt) {}
+
+// dispatch: RecordOrderEventJob::dispatch($order->id, now()->toImmutable());
+// handle(): 'occurred_at' => $this->occurredAt   — never now()
+```
+
+- **MUST** re-check in `handle()` that a delayed, released or retried job is still the latest intent, and no-op when it is superseded (a newer version exists, the setting it served changed, the run it belongs to was replaced). Carry the version or token in the constructor and compare under the lock. `failed()` applies the same guard, or an old job marks its replacement as failed.
+- **MUST** close any "running" log, status row or reservation the job opened on **every** exit: each early return, not only success and `failed()`. A row left running blocks the next run until it times out.
+- **MUST NOT** infer a mode from data that can change before the job runs (an empty collection meaning "all"). Pass the mode explicitly.
 
 ## Queue selection
 

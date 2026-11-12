@@ -23,6 +23,28 @@
 - **SHOULD** depend on (and be bound via) an interface when callers shouldn't know the concrete implementation — see `app/Contracts/CLAUDE.md` and `app/Providers/CLAUDE.md`.
 - **SHOULD** translate vendor/SDK exceptions into a domain exception (see `app/Exceptions/CLAUDE.md`) so callers don't couple to the vendor.
 
+## External side effects
+
+These apply to every remote write, wherever it is called from.
+
+- **An uncertain result is not an absence.** A timeout or lost response means the remote write may have happened. **MUST NOT** create a replacement, release the hold, or forget the idempotency key until the outcome is resolved; retry with the same key. A lookup that returns nothing proves absence only when it could have found the earlier attempt.
+- **MUST** clean up a remote or stored resource you created on any `Throwable`, not only on a validation failure or a null return. Everything after the create is inside the `try`.
+
+```php
+$event = $this->client->createEvent($payload);
+
+try {
+    $link = $this->client->waitForMeetingLink($event->id);   // can time out
+} catch (Throwable $e) {
+    $this->client->deleteEvent($event->id);
+
+    throw $e;
+}
+```
+
+- **MUST** check the result before the step that depends on it. A refused remote delete must stop the replacement; an `update()` that enforces an invariant must have its affected-row count checked. A call that did not throw has not necessarily succeeded.
+- **MUST** lock and re-read local state after the call before writing what it returned — see **Lock, re-read, then decide** in `app/CLAUDE.md`.
+
 ## Action vs Service
 
 ❌ One business operation with no external system — it's an Action, not a Service:

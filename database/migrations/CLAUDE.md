@@ -30,7 +30,7 @@ Migrations are the only sanctioned way to change schema. Treat them as version c
 For production-deployed schemas, **SHOULD** expand then contract rather than one destructive migration:
 
 1. **Expand** — add the new column/table/index (nullable or with a safe default) in a migration; deploy code that writes both old and new shapes if needed.
-2. **Backfill** — fill existing rows (job, command, or follow-up migration) without locking the app on a long `UPDATE` in the same deploy as a breaking drop.
+2. **Backfill** — fill existing rows (job, command, or follow-up migration) without locking the app on a long `UPDATE` in the same deploy as a breaking drop. **MUST** iterate with `chunkById()` / `lazyById()`: a backfill fills the column its own `where` filters on, so offset paging (`each()`, `chunk()`, `lazy()`) skips every other page. Keep the predicate in the UPDATE so a row edited meanwhile is not overwritten.
 3. **Contract** — only after the new path is live, drop the old column/constraint in a later migration.
 
 **MUST NOT** combine “add required column + drop old column + rewrite all readers” in a single migration that cannot roll forward under load. Expand first; contract after the cutover.

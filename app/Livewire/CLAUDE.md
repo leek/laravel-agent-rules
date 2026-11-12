@@ -56,6 +56,10 @@ public function publish(): void
 }
 ```
 
+## Stale component state
+
+A component's properties are a snapshot from an earlier request. **MUST** re-check a version, status or eligibility read from them inside the transaction and row lock that performs the write, not before calling the Action that takes the lock — see **Lock, re-read, then decide** in `app/CLAUDE.md`.
+
 ## Property-level validation — `#[Validate]`
 
 **PREFER** `#[Validate]` on the property over a `rules()` method when rules are property-local:

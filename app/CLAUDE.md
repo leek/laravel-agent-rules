@@ -117,6 +117,85 @@ public function __construct(private readonly Mailer $mailer) {}
 - **MUST** read secrets only via `config(...)` (never `env()` outside `config/*.php`) — see `config/CLAUDE.md`.
 - **MUST NOT** mass-assign unvalidated request data; use Form Requests and `$fillable` / `$guarded` deliberately — see `app/Http/Requests/CLAUDE.md` and `app/Models/CLAUDE.md`.
 
+## Correctness (cross-cutting)
+
+These four rules apply wherever the code lives: Actions, Services, Livewire components, Commands, Jobs, Observers, Queries.
+
+### Sweep the siblings
+
+A rule enforced on one path and missed on its twin is the most common defect found in review. When you add or change a guard, eligibility rule, authorization check, masking rule, enum case, status value or mode, **MUST** find every other path that has to agree and change it in the same commit:
+
+- **Every entry point of the operation:** create and update, send and resend, UI and API and job and command. Put the guard in the shared callee (the Action or the model) so no caller can skip it. An effect applied on create (a provider setting, a derived column) also applies on update.
+- **Every reader of the status, enum or key you extended:** grep the old cases (`=== Status::X`, `where('status', ...)`, `match`, scopes, notification and banner copy). A reader that was never updated treats the new case as "not the old one". The same sweep applies when you re-key a relation or make a foreign key nullable: readers of the old key, and every early return on its null.
+- **A preview or dry-run calls the runtime's own decision code,** never a copy. A copy drifts, and the preview then promises what the write refuses.
+- **A predicate that a model scope owns is not restated** in a report, export or new query: call the scope. When a scope has an in-memory twin (`scopeOverdue()` and `isOverdue()`), change both and test that they agree on the same rows.
+- **Find the sibling first.** Before writing the logic, look for the existing implementation of the same operation or quantity and diff its guards against yours. The correct rule is often already next door.
+
+```php
+// ❌ Restates half of the scope: dismissed alerts now count as active.
+Alert::query()->where('is_resolved', false)->count();
+
+// ✅ One owner.
+Alert::query()->active()->count();
+```
+
+### Lock, re-read, then decide
+
+**MUST** take the row lock first, re-read the row under it, and only then check and write. A check made on a model loaded before the lock (status, eligibility, optimistic version, access token) proves nothing: a concurrent request passes the same check.
+
+```php
+// ❌ Checked before the lock: two concurrent approvals both pass.
+if ($invoice->status !== InvoiceStatus::Draft) {
+    return;
+}
+DB::transaction(fn () => $invoice->update(['status' => InvoiceStatus::Approved]));
+
+// ✅ Lock, re-read, re-check, write.
+DB::transaction(function () use ($invoiceId): void {
+    $invoice = Invoice::query()->lockForUpdate()->findOrFail($invoiceId);
+
+    if ($invoice->status !== InvoiceStatus::Draft) {
+        return;
+    }
+
+    $invoice->update(['status' => InvoiceStatus::Approved]);
+});
+```
+
+- Repeat **every** pre-lock check on the locked row, including time-derived ones (`isUpcoming()`). A version check compares the record's identity and its version, not a counter alone.
+- Build outgoing content (mail, API payloads, before/after snapshots) from the locked row, inside the transaction.
+- Never save a whole JSON or array column from a copy read before the lock. Change the one key under the lock, or atomically: `->update(['meta->cursor' => $next])`.
+- In a chunked sweep the chunk's model is already stale. Put the predicate in the UPDATE's `where` and check the affected count, or re-read under the lock before saving.
+- After an HTTP call, everything loaded before it is stale. Lock and re-read before writing what the call returned, and confirm the credential or version the call used is still the current one.
+- All writers of one invariant take the same lock. A cache lock and a row lock do not exclude each other.
+
+`lockForUpdate()` only locks inside a transaction — see **Transactions** in `app/Models/CLAUDE.md`.
+
+### Derived state
+
+A stamp, flag, fingerprint, cache key, snapshot or denormalised total is computed from inputs. **MUST** name those inputs where it is computed, and make every writer of an input reset or recompute it in the same write.
+
+- A cache key, memo key or fingerprint includes every input that changes the result. `drive:{from}:{to}` reused across departure times returns the morning duration for a rush-hour trip.
+- A recompute handles the empty set by writing zero or null. Returning early leaves the old total in place after the last child is removed.
+- A flag set on loss or failure needs the path that clears it on recovery. A column that only applies to one type or foreign key is cleared when that type or key changes.
+
+### Null and numeric edges
+
+- `??` cannot tell an omitted key from an explicit null. Where null means "clear this field", **MUST** use `array_key_exists()`:
+
+```php
+// ❌ A cleared room comes back as the saved one.
+$roomId = $data['room_id'] ?? $booking->room_id;
+
+// ✅
+$roomId = array_key_exists('room_id', $data) ? $data['room_id'] : $booking->room_id;
+```
+
+- **MUST** guard the empty case before `random_int(0, count($items) - 1)` or `array_rand($items)`. Both throw `ValueError` on an empty set.
+- **MUST** compare thresholds and caps on unrounded values and round only for display. When a rounded amount is bounded by a hard cap, round toward the safe side.
+- **MUST** validate the raw parts before a normaliser combines or discards them (sums components, maps an unknown value to null). Format-only normalisation (trim, lowercase) may run first.
+- A regex length bound on user text needs the `/u` modifier. Without it `{1,10}` counts bytes and rejects multibyte text.
+
 ## Caching
 
 Cache keys, `Cache::flexible` / locks / memo, tags, null results, and invalidation live in **`app/Support/CLAUDE.md`** — apply those rules at every call site (Jobs, Models, Actions), not only under Support classes.
