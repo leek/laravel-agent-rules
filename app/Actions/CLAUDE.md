@@ -8,7 +8,7 @@
 
 ## Rules
 
-- **MUST** expose exactly one public operation: `handle(...)`. A public `__construct(...)` for dependency injection is allowed; keep helper methods `private` / `protected`. Matches the [Laravel Actions](https://www.laravelactions.com/2.x/one-class-one-task.html) convention and mirrors Jobs/Listeners.
+- **MUST** expose exactly one public operation: `handle(...)`. A public `__construct(...)` for dependency injection is allowed; keep helper methods `private` / `protected`.
 - **SHOULD** be the default home for any new business logic before considering events/jobs/services.
 - **SHOULD** be invoked from controllers via the container (`app(VerifyUserAction::class)->handle(...)`) or constructor injection.
 - **MUST** own the operation's guards (eligibility, authorization for every record it mutates) so no entry point can skip them, and re-check them on the locked row before writing — see **Sweep the siblings** and **Lock, re-read, then decide** in `app/CLAUDE.md`.

@@ -21,7 +21,7 @@
 
 - **MUST** dispatch with `->afterCommit()` when the job depends on rows written in the current transaction. Without it, the worker can pick the job up before the parent transaction commits and observe missing rows.
 
-❌ Dispatched mid-transaction — a fast worker runs before the commit and can't find the order:
+❌ Dispatched mid-transaction:
 
 ```php
 DB::transaction(function () use ($order) {

@@ -8,11 +8,11 @@
 
 ## Rules
 
-- **MUST** exhaust built-in casts before writing a custom one: `datetime`, `decimal:n`, `encrypted`, enum casts, `AsCollection`, `AsArrayObject`, `AsStringable`, `hashed`. A custom cast that re-implements a built-in is wrong.
+- **MUST** exhaust built-in casts before writing a custom one: `datetime`, `decimal:n`, `encrypted`, enum casts, `AsCollection`, `AsArrayObject`, `AsStringable`, `hashed`.
 - **MUST** implement `CastsAttributes` with `get()` and `set()`. `set()` may return an array keyed by column name when one value object spans multiple columns.
 - **SHOULD** make the value object immutable (readonly properties) and replace the whole attribute to change it — Eloquent caches the cast object instance, so in-place mutation makes model state hard to reason about.
 - **PREFER** an inbound-only cast (`CastsInboundAttributes`) when only writes need transforming — it has no `get()`.
-- For value objects used across many models, **PREFER** the `Castable` interface on the value object (`castUsing()`) so models can cast with `MoneyValue::class` directly when it implements that contract. The example below instead registers the separate `App\Casts\Money` adapter and returns `App\Support\MoneyValue`.
+- For value objects used across many models, **PREFER** the `Castable` interface on the value object (`castUsing()`) so models can cast with `MoneyValue::class` directly. The example below instead registers the separate `App\Casts\Money` adapter and returns `App\Support\MoneyValue`.
 
 ```php
 use App\Support\MoneyValue;

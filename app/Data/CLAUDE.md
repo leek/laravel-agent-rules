@@ -12,7 +12,7 @@
 - **MUST** contain only scalars, enums, immutable value objects (including `CarbonImmutable` / `DateTimeImmutable`), other DTOs, or collections of those. Convert mutable Carbon dates with `->toImmutable()` at the boundary; readonly properties alone do not prevent mutation of contained objects. **Never an Eloquent model instance** — a DTO that wraps a model is just the model, so pass the model directly.
 - **MUST** build the DTO at the boundary: a Form Request's `toDto()` (see `app/Http/Requests/CLAUDE.md`) or a named static constructor (`fromArray()`, `fromModel()`). Actions and Jobs receive a finished DTO; they don't assemble one from request input.
 - **MUST NOT** put behavior with side effects here — no DB queries, no I/O, no dispatching. Read-only accessors computed purely from the DTO's own properties are fine.
-- **PREFER** a plain `readonly` PHP class. Reach for `spatie/laravel-data` only when you actually need its extras — validation, wrapping, casts, lazy properties, or TypeScript transformers. Don't pull a package in for a three-field struct.
+- **PREFER** a plain `readonly` PHP class. Reach for `spatie/laravel-data` only when you actually need its extras — validation, wrapping, casts, lazy properties, or TypeScript transformers.
 
 ## Plain DTO
 

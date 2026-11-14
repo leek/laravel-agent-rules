@@ -22,7 +22,7 @@ final class SendOrderConfirmation
 
 - **MUST** type-hint the event parameter. An untyped `handle($event)` is silently skipped by auto-discovery.
 
-❌ Untyped — auto-discovery can't match it to an event, so it never fires:
+❌ Untyped:
 
 ```php
 public function handle($event): void { /* ... */ }
@@ -53,8 +53,6 @@ final class OrderActivityListener
     public function handleOrderShipped(OrderShipped $event): void { /* ... */ }
 }
 ```
-
-Each method is registered against its own type-hinted event.
 
 ## Queued listeners
 

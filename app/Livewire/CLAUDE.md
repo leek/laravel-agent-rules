@@ -25,7 +25,7 @@ These rules apply to class-based components under `app/Livewire/` and single-fil
 
 - **MUST** call `$this->authorize(...)` in `mount()` AND inside every action method that mutates state. A `mount()`-only check is bypassable — the component is alive in the browser and any public method is callable directly.
 
-❌ Authorized only in `mount()` — `publish()` is a public method callable directly from the browser, unchecked:
+❌ Authorized only in `mount()` — `publish()` is unchecked:
 
 ```php
 public function mount(Post $post): void

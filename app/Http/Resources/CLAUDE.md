@@ -1,6 +1,6 @@
 # API Resources
 
-**Purpose:** shape an Eloquent model (or collection) into a JSON response payload. Keeps controllers free of array-building logic.
+**Purpose:** shape an Eloquent model (or collection) into a JSON response payload.
 
 ## Naming
 
@@ -80,7 +80,7 @@ Some APIs adopt an explicit envelope such as:
 { "success": true, "data": ..., "error": null, "meta": ... }
 ```
 
-That shape is a **project API contract**, not Laravel's default Resource pagination. Use it only when the project's public API already (or deliberately) standardizes on it — document the contract once for the app and keep every endpoint consistent. Do **not** invent a custom envelope on top of Laravel Resources "because the rules said so."
+That shape is a **project API contract**, not Laravel's default Resource pagination. Use it only when the project's public API already (or deliberately) standardizes on it — document the contract once for the app and keep every endpoint consistent.
 
 When the project *does* require that envelope, build it deliberately (often a thin response helper or base resource) and pin the shape in feature tests with `assertJsonStructure`. Example of a hand-rolled paginated envelope:
 

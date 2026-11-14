@@ -60,7 +60,7 @@ final class ChatRoomChannel
 
 ## The event side lives in `app/Events/`
 
-- The class that fires data onto a channel is an **Event** implementing `ShouldBroadcast` (queued) or `ShouldBroadcastNow` (synchronous) — see `app/Events/CLAUDE.md`. The `Broadcasting` directory only holds the auth gate.
+- The class that fires data onto a channel is an **Event** implementing `ShouldBroadcast` (queued) or `ShouldBroadcastNow` (synchronous) — see `app/Events/CLAUDE.md`.
 - **MUST** return a `PrivateChannel` / `PresenceChannel` / `Channel` from `broadcastOn()` whose name matches a pattern registered in `routes/channels.php`.
 - **SHOULD** set a stable wire name with `broadcastAs()` so the client subscribes to a contract, not a class name.
 - **MUST** keep the `broadcastWith()` payload to JSON-serializable scalars/arrays — same rule as a Notification's `toArray()`. Do not ship model instances; send ids + the fields the client needs.
@@ -88,7 +88,7 @@ final class OrderShipped implements ShouldBroadcast
 }
 ```
 
-> Register channel name patterns in `routes/channels.php` (see Registration above). Route file roles are listed in `routes/CLAUDE.md`.
+> Route file roles are listed in `routes/CLAUDE.md`.
 
 When an event declares `broadcastAs()`, Echo must listen with a leading dot so it does not prepend the application's event namespace:
 

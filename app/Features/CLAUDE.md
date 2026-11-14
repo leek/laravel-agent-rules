@@ -93,5 +93,3 @@ After a flag is fully rolled out, **MUST** delete the flag definition AND purge 
 ```bash
 php artisan pennant:purge new-checkout
 ```
-
-Stale flag definitions accumulate as technical debt — clean them up.

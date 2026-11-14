@@ -133,8 +133,6 @@ Schedule::command('app:fetch-users')->everyFiveMinutes();
 Schedule::call(fn () => Account::recompute())->hourly()->description('Recompute account balances');
 ```
 
-Hard rules:
-
 - **MUST** call `->withoutOverlapping()` on any task whose runtime may exceed its interval. Default lock holds 24h — pass `expiresAt: $minutes` to recover faster after a crashed worker.
 - **MUST** call `->onOneServer()` in multi-server deployments. Requires a `redis`, `memcached`, or `database` cache driver.
 - **SHOULD** chain monitoring hooks: `->before(fn)`, `->after(fn)`, `->onSuccess(fn)`, `->onFailure(fn)`.

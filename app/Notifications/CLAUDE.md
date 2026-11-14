@@ -39,7 +39,7 @@ For a queued notification that depends on rows written inside a DB transaction, 
 $user->notify((new InvoicePaid($invoice))->afterCommit());
 ```
 
-Alternatively, call `$this->afterCommit()` in the notification constructor. Do not redeclare `Queueable`'s `$afterCommit` property with a type. Without deferral, the worker can deliver before the parent transaction commits and observe missing rows. This only defers queued notifications (`ShouldQueue`), not synchronous delivery.
+Alternatively, call `$this->afterCommit()` in the notification constructor. Do not redeclare `Queueable`'s `$afterCommit` property — see **Never redeclare a `Queueable` property** in `app/Jobs/CLAUDE.md`. Without deferral, the worker can deliver before the parent transaction commits and observe missing rows. This only defers queued notifications (`ShouldQueue`), not synchronous delivery.
 
 ## Conditional delivery — `shouldSend()`
 
@@ -54,7 +54,7 @@ public function shouldSend(object $notifiable, string $channel): bool
 
 ## Bulk send
 
-- **PREFER** `Notification::send($users, new InvoicePaid($invoice))` (or `sendNow`) over a hand-rolled loop — clearer and keeps Laravel's notification pipeline in one place.
+- **PREFER** `Notification::send($users, new InvoicePaid($invoice))` (or `sendNow`) over a hand-rolled loop.
 - For `ShouldQueue` notifications, Laravel still enqueues **one job per notifiable** either way; `send` is not a bulk-performance optimization.
 
 ## On-demand notifications

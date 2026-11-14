@@ -1,6 +1,6 @@
 # Migrations
 
-Migrations are the only sanctioned way to change schema. Treat them as version control for the database.
+Migrations are the only sanctioned way to change schema.
 
 > Schema-design rules (naming, column types, indexes, PKs/FKs) live in `database/CLAUDE.md`.
 
@@ -47,8 +47,6 @@ php artisan make:migration add_published_at_to_products_table
 ```
 
 ## Example — add column
-
-`after()` is MySQL/MariaDB-only — omit on Postgres/SQLite/SQL Server.
 
 ```php
 return new class extends Migration

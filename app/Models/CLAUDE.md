@@ -57,14 +57,6 @@ final class Project extends Model
 **PREFER** the `casts()` method over the legacy `protected $casts = [...]` property — class references and type-safety. Exhaust built-ins before custom casts: `'array'`, `'collection'`, `'encrypted'`, `'encrypted:array'`, `'hashed'`, `'datetime'`, `AsStringable::class`, `AsEnumCollection::class`, `AsCollection::of(...)`, `'json:unicode'`, `AsFluent::class` (`Illuminate\Database\Eloquent\Casts\AsFluent`).
 
 ```php
-protected function casts(): array
-{
-    return [
-        'status'      => ProjectStatus::class,
-        'archived_at' => 'datetime',
-    ];
-}
-
 // Value-object via Attribute accessor/mutator when a cast class is overkill:
 protected function budgetCents(): Attribute
 {

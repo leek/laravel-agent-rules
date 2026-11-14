@@ -23,7 +23,7 @@ Or just add a plain class under `app/Support/`.
 
 # Caching
 
-Generic caching rules. Apply wherever cache is touched — Support classes are a common home for cache-wrapping helpers, but the rules apply to every call site.
+Generic caching rules. Support classes are a common home for cache-wrapping helpers, but the rules apply to every call site.
 
 ## Cache key conventions
 

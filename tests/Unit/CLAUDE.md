@@ -13,7 +13,7 @@
 
 ## Rules
 
-- **MUST NOT** touch the database, the container, the queue, HTTP, mail, or the filesystem. If a test needs any of those, it's a Feature test — move it. A unit test that boots the framework isn't a unit test.
+- **MUST NOT** touch the database, the container, the queue, HTTP, mail, or the filesystem. If a test needs any of those, it's a Feature test — move it.
 - **MUST NOT** use `RefreshDatabase` / `LazilyRefreshDatabase` or Eloquent factories here — even `factory()->make()` resolves Faker through the container. Construct plain objects directly; factory-based tests belong in `tests/Feature/`.
 - **AVOID** mocking the framework just to bypass it. Heavy mocking to make a "unit" test pass is a signal the logic should be tested as a Feature test, or extracted into a pure class first.
 - **SHOULD** instantiate the subject directly (`new MoneyCalculator()`), not resolve it from the container.

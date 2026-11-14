@@ -48,7 +48,7 @@ Order columns top-to-bottom as:
 
 ## Common column patterns
 
-- `order_column` — sort position (avoid reserved word `order` as a column name).
+- `order_column` — sort position.
 
 ## Indexes
 

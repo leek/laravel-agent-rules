@@ -4,7 +4,7 @@
 
 ## Naming
 
-- **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Laravel core convention; matches Notifications (also no suffix). Mailables use a `Mail` suffix instead — see `app/Mail/CLAUDE.md`.
+- **MUST** name events `{Subject}{PastTense}`, **no suffix** — e.g. `UserCreated`, `OrderShipped`. Matches Notifications (also no suffix). Mailables use a `Mail` suffix instead — see `app/Mail/CLAUDE.md`.
 - Listeners live in `app/Listeners/` — see `app/Listeners/CLAUDE.md`.
 - Events and Notifications both use event-like names in different namespaces (`App\Events\OrderShipped` vs `App\Notifications\OrderShipped`). **SHOULD** pick distinct class names when both exist for the same occurrence (e.g. event `OrderShipped`, notification that describes the message — or a listener named `SendOrderShipped`) so imports and stack traces stay unambiguous.
 
@@ -33,7 +33,7 @@ event(new OrderCreated());
 
 When the event is fired from inside a DB transaction and listeners depend on rows written there, **MUST** implement `ShouldDispatchAfterCommit` on the event so dispatch is deferred until the outer transaction commits.
 
-❌ Plain event dispatched inside a transaction — a sync listener observes partial state:
+❌ Plain event dispatched inside a transaction:
 
 ```php
 final class OrderCreated  // no ShouldDispatchAfterCommit
@@ -53,4 +53,4 @@ final class OrderCreated implements ShouldDispatchAfterCommit
 }
 ```
 
-Without it, a sync listener can run mid-transaction and observe a partial state; a queued listener can be picked up before the parent transaction commits. The job-side analogue is `->afterCommit()` / `$afterCommit = true` (see `app/Jobs/CLAUDE.md`).
+Without it, a sync listener can run mid-transaction and observe a partial state; a queued listener can be picked up before the parent transaction commits. The job-side analogue is `->afterCommit()` on the dispatch, or `$this->afterCommit()` in the job's constructor (see `app/Jobs/CLAUDE.md`).

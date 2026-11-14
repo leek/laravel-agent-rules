@@ -15,8 +15,6 @@ Default test framework: [Pest](https://pestphp.com/). **Pest is required** for n
 
 ## What to test
 
-- Code logic (Actions, Support classes, Jobs, Commands)
-- HTTP layer (Controllers, Livewire components, route auth boundaries)
 - Routing (named routes, redirects, middleware behaviour)
 - Edge cases — happy path is necessary but **not** sufficient.
 
