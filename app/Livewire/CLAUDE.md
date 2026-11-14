@@ -146,6 +146,21 @@ Use `wire:key` on both branches of `@if/@else` blocks with structurally differen
 @endif
 ```
 
+## Alpine and browser state
+
+- **MUST** stop every timer, observer and listener an Alpine component starts. Start it in `init()` and stop it in `destroy()`, which Alpine calls when the element leaves the DOM; otherwise each visit to the page adds another running interval.
+
+```js
+Alpine.data('savedAgo', () => ({
+    timer: null,
+    init() { this.timer = setInterval(() => this.tick(), 30000) },
+    destroy() { clearInterval(this.timer) },
+}))
+```
+
+- **MUST** report a browser-side action from the browser. A clipboard write, download or share can be refused, so show "Link copied" when `navigator.clipboard.writeText()` resolves and an error when it rejects. A server-sent success toast claims what the server cannot see.
+- **MUST** resync state derived from layout (a scrollspy's `aria-current`, a sticky offset, a measured height) when Livewire changes the DOM. Load, scroll and window-resize handlers miss a morph: watch the element with a `ResizeObserver` or `MutationObserver`.
+
 ## Component parameters + package aliases
 
 - `@livewire(Component::class, ['key' => $value])` params match `mount()` **by array key name** — a mismatch silently resolves to `null`. Verify Blade calls after refactoring.

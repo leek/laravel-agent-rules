@@ -13,6 +13,7 @@
 
 - **MUST** keep keys stable once shipped — changing a key is a breaking rename for every call site.
 - **SHOULD** nest by concept: `__('orders.status.pending')` rather than flat `__('orders_status_pending')`.
+- **MUST** add a new key to every locale the app ships, in the same commit. Laravel falls back to the fallback locale per key, so a group that exists only in `lang/en/` renders mixed-language sentences ("Saved hace 1 minuto"). A new group file needs its twin in each `lang/{locale}/`.
 - **MUST** pass interpolations as the second argument: `__('mail.invoice_paid.subject', ['number' => $invoice->number])`.
 - **MUST** pin a JSON phrase key in `lang/{locale}.json` (`en.json` included) when it matches a PHP group file name (`__('Orders')` next to `lang/en/orders.php`). Without the JSON entry Laravel reads the key as a group, and on a case-insensitive filesystem (macOS default) `__('Orders')` returns the whole `orders.php` array, while Linux returns the string.
 

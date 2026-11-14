@@ -85,6 +85,8 @@ public function update(User $user, Post $post): Response
 - Livewire actions are separate subsequent requests: authorize initial access in `mount()` and authorize every sensitive action against current state, even when the initial page route was guarded.
 - For abilities that are **not** model-bound (e.g. `view-horizon`, `access-billing`), **SHOULD** define them once with `Gate::define('view-horizon', ...)` in a provider and authorize with `Gate::authorize('view-horizon')` / `->can('view-horizon')` — same as policies, not ad-hoc `if` trees.
 - `$this->authorize()` is available only on classes using `AuthorizesRequests` (such as Livewire components); the modern skeleton's base controller does not include that trait.
+- **MUST** answer "is it shown" and "is it allowed" with the same policy method. A button's visibility, a link builder (`urlFor()`), a menu entry and the action itself all call `can('update', $post)`; a second hand-written condition drifts, so the UI hides what the gate allows or links to a page that answers 403.
+- **MUST** give every new page, view or route that shows one record its own per-record check (`view`, or a narrower ability). List access (`viewAny`) does not cover it.
 - **SHOULD** test denial paths, not just allow paths.
 - **Auth boundary:** session web routes use `auth` + policies/`->can(...)`. Token API routes use Sanctum (`auth:sanctum`) and **MUST** assert abilities on ability-scoped endpoints (grant + deny) — see `tests/CLAUDE.md` and `tests/Feature/CLAUDE.md`. Never treat a bare authenticated user as authorized for every ability.
 

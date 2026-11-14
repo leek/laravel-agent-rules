@@ -70,7 +70,7 @@ Laravel's optional directories need setup independently of installing agent rule
 
 | Path                              | Covers                                                    |
 | --------------------------------- | --------------------------------------------------------- |
-| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools, prefer `final`), IoC/DI, constants & i18n, security bullets, cross-cutting correctness (sibling paths, lock-then-re-read, derived state, null/numeric edges), domain sub-namespacing, class-type → directory index |
+| `app/CLAUDE.md`                   | Cross-cutting naming, code style (one-thing methods, no DocBlocks, short syntax, standard tools, prefer `final`), IoC/DI, constants & i18n, security bullets, cross-cutting correctness (sibling paths, lock-then-re-read, derived state, null/numeric edges, tenant-local dates), domain sub-namespacing |
 | `app/Models/`                     | Eloquent: casts, relationships, scopes, eager loading, transactions |
 | `app/Models/Scopes/` / `app/Models/Builders/` | Global scope classes and custom Eloquent builders |
 | `app/Queries/`                    | Reusable query objects                                    |

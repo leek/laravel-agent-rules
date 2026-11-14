@@ -44,6 +44,17 @@ try {
 
 - **MUST** check the result before the step that depends on it. A refused remote delete must stop the replacement; an `update()` that enforces an invariant must have its affected-row count checked. A call that did not throw has not necessarily succeeded.
 - **MUST** lock and re-read local state after the call before writing what it returned — see **Lock, re-read, then decide** in `app/CLAUDE.md`.
+- **MUST** send the complete object to an endpoint that replaces what it receives. Where the remote clears every field the payload omits, a minimal payload built for one change blanks the rest (phones, email, language). Read the provider's update semantics before reusing a partial payload builder.
+
+## Inbound imports and syncs
+
+These apply to every feed, file import and provider sync, wherever the code lives.
+
+- **A blank incoming value is not an instruction to clear.** **MUST** keep the held value when the feed sends an empty string or null, unless the feed's contract says blank means removed. Erasing a field no audit log records is unrecoverable.
+- **A fallback match must be unique.** When the primary key (NPI, external id) finds nothing and the import falls back to a weaker one (name, email), **MUST** link only when exactly one row fits; two or more candidates is "no match", recorded for review.
+- **MUST** decide per field who owns a row a user has edited: the feed or the user. Record that provenance on the row, apply it in one place, and report a skipped refresh as a discrepancy the user can see.
+- **MUST** hold a value the importer recognises but cannot validate (an out-of-range score, a formula with no cached result) for review. It is neither saved as clean nor dropped.
+- A lookup made under `withoutGlobalScopes()` also finds soft-deleted and merged-away rows — see **Soft deletes** in `app/Models/CLAUDE.md`.
 
 ## Action vs Service
 

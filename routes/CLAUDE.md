@@ -27,6 +27,7 @@ Fresh Laravel 12/13 applications ship `web.php` and `console.php`. Add API routi
 - **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship. Separately scope and authorize the parent against the authenticated tenant/owner; scoped child binding does not provide tenant authorization.
 - **MUST** match the route placeholder to the type-hinted argument name (`{conversation}` with `Conversation $conversation`). A mismatch skips implicit binding and can inject a fresh, unpersisted model through the container rather than the requested row; optional arguments may resolve to null.
 - **MUST** constrain free-form route parameters at the route boundary. Prefer typed helpers (`whereNumber()`, `whereUuid()`, `whereAlpha()`, `whereAlphaNumeric()`, `whereIn()`) over regex when they express the rule; invalid values should 404 before the controller runs.
+- `Route::redirect()` and `Route::permanentRedirect()` drop the query string: the destination is built from route parameters only, so campaign and attribution parameters are lost. Where the old URL can arrive with a query, **MUST** forward it: `Route::get('/old', fn (Request $request) => redirect()->route('new', $request->query(), 301));`.
 
 ## Example
 

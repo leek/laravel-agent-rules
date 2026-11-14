@@ -109,3 +109,25 @@ public function destroy(User $user): Response
 ```
 
 Import `Illuminate\Support\Facades\Gate`. The modern skeleton's base controller has no `authorize()` method; `$this->authorize()` requires explicitly adding `Illuminate\Foundation\Auth\Access\AuthorizesRequests` to the controller.
+
+## Webhooks and replayed events
+
+Providers redeliver. **MUST** make each delivery take effect once: insert a receipt keyed on the provider's event id (unique index) in the same transaction as the effect, and answer a replay with the same 2xx.
+
+```php
+DB::transaction(function () use ($event): void {
+    $receipt = WebhookReceipt::query()->createOrFirst([
+        'provider' => 'stripe',
+        'event_id' => $event->id,
+    ]);
+
+    if (! $receipt->wasRecentlyCreated) {
+        return;   // replay: already handled
+    }
+
+    HandleInvoicePaidJob::dispatch($event->id)->afterCommit();
+});
+```
+
+- Where the provider sends no event id, key the receipt on what identifies the occurrence (the record, its stage, the provider's own timestamp), never on the resulting state alone: a replay of "approved" arrives when the row is already approved.
+- Work a later event has closed stays closed on replay. Record which occurrence each follow-up answers, and check it before reopening.

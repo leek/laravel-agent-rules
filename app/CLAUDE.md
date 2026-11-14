@@ -28,47 +28,17 @@ All rules below are **MUST** unless tagged **SHOULD** / **PREFER** / **AVOID**.
 
 ## Organize by domain (sub-namespacing)
 
-Group classes by **business domain** in a subfolder *inside* the class-type folder. This adds a domain axis on top of Laravel's default folders — you keep framework conventions and package compatibility while making the business domain obvious. It's the structured alternative to letting a folder fill up with unrelated classes (or inventing vague catch-alls like `Helpers` / `Utilities`, which this repo already replaces with typed homes).
+Group classes by **business domain** in a subfolder *inside* the class-type folder: `app/Models/Billing/Invoice.php`, `app/Jobs/Billing/SyncInvoiceToErp.php`, `app/Policies/Billing/InvoicePolicy.php`.
 
-- **SHOULD** start flat. A class-type folder serving one domain stays flat (`app/Models/User.php`) — don't pre-create domain folders for a small app.
-- **MUST** group by domain subfolder when a folder holds classes from **2+ distinct business domains**. Domain count determines this convention, not a file-count threshold; several classes in one domain may remain flat.
-- **MUST** match the namespace to the directory (PSR-4) and pass the sub-path to `make:*`:
-
-```bash
-php artisan make:model   Billing/Invoice            # App\Models\Billing\Invoice
-php artisan make:job     Billing/SyncInvoiceToErp
-php artisan make:policy  Billing/InvoicePolicy
-php artisan make:request Billing/StoreInvoiceRequest
-```
-
-- **MUST** use **one** domain name across every folder — `Billing/` in Models, Jobs, Policies, and Requests alike; never `Billing` in one and `Invoicing` in another.
-- **SHOULD** name domains after the app's own vocabulary and keep them aligned with how routes/modules are already grouped.
-
-✅ A grown app grouped by domain — the domain is obvious at a glance:
-
-```
-app/
-  Http/Controllers/Billing/InvoiceController.php
-  Http/Requests/Billing/StoreInvoiceRequest.php
-  Jobs/Billing/SyncInvoiceToErp.php
-  Models/Billing/Invoice.php
-  Policies/Billing/InvoicePolicy.php
-```
-
-❌ Three domains dumped flat — every folder is a junk drawer:
-
-```
-app/Models/Invoice.php   Order.php   Ticket.php
-app/Jobs/SyncInvoiceToErp.php   ShipOrder.php   EscalateTicket.php
-```
-
-**Interactions with other folders:**
-
-- **Controllers** already namespace by audience/version (`Api/`, `Admin/`, `Api/V{N}/`); domain nests *inside* that axis (`Api/V1/Billing/InvoiceController.php`) — see `app/Http/Controllers/CLAUDE.md`.
-- **Factories** resolve from the model namespace, so a domain-namespaced model looks up `Database\Factories\Billing\InvoiceFactory` — mirror the subfolder (see `database/factories/CLAUDE.md`).
-- **Migrations are the exception — keep them flat** (timestamp-ordered anonymous classes, not PSR-4; `migrate` ignores subfolders) — see `database/migrations/CLAUDE.md`.
-- **Filament resources are the other exception — group by model, not domain.** The layout is `app/Filament/Resources/{Models}/`; the domain axis there is a **Cluster** (`app/Filament/Clusters/{Domain}/Resources/...`), Filament's equivalent of domain sub-namespacing. Reuse the same domain name — `Billing/` here → a `Billing` cluster there. See `filament-agent-rules`.
-- **Tests** mirror the source path under `app/`, preserving class type, audience/version, and domain (`tests/Feature/Http/Controllers/Api/V1/Billing/InvoiceControllerTest.php`).
+- **SHOULD** start flat. A class-type folder serving one domain stays flat (`app/Models/User.php`).
+- **MUST** group by domain subfolder when a folder holds classes from **2+ distinct business domains**. Domain count decides, not file count.
+- **MUST** match the namespace to the directory (PSR-4) and pass the sub-path to `make:*`: `php artisan make:model Billing/Invoice`.
+- **MUST** use **one** domain name across every folder: `Billing/` in Models, Jobs, Policies and Requests alike, taken from the app's own vocabulary.
+- **Controllers** nest the domain *inside* the audience/version axis (`Api/V1/Billing/InvoiceController.php`) — see `app/Http/Controllers/CLAUDE.md`.
+- **Factories** mirror the model's subfolder — see `database/factories/CLAUDE.md`.
+- **Migrations stay flat** — see `database/migrations/CLAUDE.md`.
+- **Filament resources group by model**; the domain axis there is a Cluster with the same name (`app/Filament/Clusters/Billing/`). See `filament-agent-rules`.
+- **Tests** mirror the source path under `app/` (`tests/Feature/Http/Controllers/Api/V1/Billing/InvoiceControllerTest.php`).
 
 ## Code style (cross-cutting)
 
@@ -119,7 +89,7 @@ public function __construct(private readonly Mailer $mailer) {}
 
 ## Correctness (cross-cutting)
 
-These four rules apply wherever the code lives: Actions, Services, Livewire components, Commands, Jobs, Observers, Queries.
+These rules apply wherever the code lives: Actions, Services, Livewire components, Commands, Jobs, Observers, Queries.
 
 ### Sweep the siblings
 
@@ -168,6 +138,7 @@ DB::transaction(function () use ($invoiceId): void {
 - In a chunked sweep the chunk's model is already stale. Put the predicate in the UPDATE's `where` and check the affected count, or re-read under the lock before saving.
 - After an HTTP call, everything loaded before it is stale. Lock and re-read before writing what the call returned, and confirm the credential or version the call used is still the current one.
 - All writers of one invariant take the same lock. A cache lock and a row lock do not exclude each other.
+- A check-then-create has no row to lock. **MUST** back it with a unique index on the identity columns and write with `createOrFirst()` or `firstOrCreate()`, which recover from the violation only when that index exists. Where no index can express the identity, lock the parent row first.
 
 `lockForUpdate()` only locks inside a transaction — see **Transactions** in `app/Models/CLAUDE.md`.
 
@@ -178,6 +149,7 @@ A stamp, flag, fingerprint, cache key, snapshot or denormalised total is compute
 - A cache key, memo key or fingerprint includes every input that changes the result. `drive:{from}:{to}` reused across departure times returns the morning duration for a rush-hour trip.
 - A recompute handles the empty set by writing zero or null. Returning early leaves the old total in place after the last child is removed.
 - A flag set on loss or failure needs the path that clears it on recovery. A column that only applies to one type or foreign key is cleared when that type or key changes.
+- Retracting, replacing or re-dating a parent closes the open work it spawned (tasks, reminders, scheduled sends) in the same write. Otherwise the replacement spawns its own and the user sees both.
 
 ### Null and numeric edges
 
@@ -196,6 +168,21 @@ $roomId = array_key_exists('room_id', $data) ? $data['room_id'] : $booking->room
 - **MUST** validate the raw parts before a normaliser combines or discards them (sums components, maps an unknown value to null). Format-only normalisation (trim, lowercase) may run first.
 - A regex length bound on user text needs the `/u` modifier. Without it `{1,10}` counts bytes and rejects multibyte text.
 
+### Tenant-local dates
+
+"Today" belongs to the tenant or user the record belongs to. **MUST** compute today, a default date, a date picker's max, and any past/future check in that timezone:
+
+```php
+// ❌ Server "today": at 03:00 UTC a Los Angeles clinic is still on yesterday.
+$isFuture = $visitDate->isAfter(today());
+
+// ✅
+$isFuture = $visitDate->toDateString() > now($company->timezone)->toDateString();
+```
+
+- A stored UTC timestamp is converted to that timezone before it is shown, in Blade and in JavaScript alike.
+- **MUST** test at an instant where the two dates differ: `$this->travelTo('2026-03-10 03:00:00')` with the tenant in `America/Los_Angeles`.
+
 ## Caching
 
 Cache keys, `Cache::flexible` / locks / memo, tags, null results, and invalidation live in **`app/Support/CLAUDE.md`** — apply those rules at every call site (Jobs, Models, Actions), not only under Support classes.
@@ -204,48 +191,9 @@ Cache keys, `Cache::flexible` / locks / memo, tags, null results, and invalidati
 
 - **PREFER** `final` on application classes (Actions, Jobs, DTOs, Support, Services, Policies, etc.) unless the class is intentionally designed for extension (abstract base, package seam, or framework subclass that docs require leaving open).
 
-## Class naming index
+## Per-class-type rules
 
-Per-class-type naming rules are colocated with the directory that holds the class. Quick map:
-
-| Class type   | Directory                       |
-| ------------ | ------------------------------- |
-| Action       | `app/Actions/`                  |
-| Cast         | `app/Casts/`                    |
-| Channel      | `app/Broadcasting/`             |
-| Command      | `app/Console/Commands/`         |
-| Concern (Trait) | `app/Concerns/`              |
-| Contract (Interface) | `app/Contracts/`       |
-| Controller   | `app/Http/Controllers/`         |
-| Data (DTO)   | `app/Data/`                     |
-| Enum         | `app/Enums/`                    |
-| Event        | `app/Events/`                   |
-| Exception    | `app/Exceptions/`               |
-| Factory      | `database/factories/`           |
-| Feature (Pennant) | `app/Features/`            |
-| Job          | `app/Jobs/`                     |
-| Listener     | `app/Listeners/`                |
-| Livewire     | `app/Livewire/`                 |
-| Mail         | `app/Mail/`                     |
-| Middleware   | `app/Http/Middleware/`          |
-| Migration    | `database/migrations/`          |
-| Model        | `app/Models/`                   |
-| Notification | `app/Notifications/`            |
-| Observer     | `app/Observers/`                |
-| Policy       | `app/Policies/`                 |
-| Provider     | `app/Providers/`                |
-| Request      | `app/Http/Requests/`            |
-| Resource (API) | `app/Http/Resources/`         |
-| Rule         | `app/Rules/`                    |
-| Scope        | `app/Models/Scopes/`            |
-| Eloquent builder | `app/Models/Builders/`       |
-| Query object | `app/Queries/`                  |
-| Seeder       | `database/seeders/`             |
-| Service      | `app/Services/`                 |
-| State        | `app/States/`                   |
-| Support      | `app/Support/`                  |
-| Test         | `tests/`                        |
-| View Component | `app/View/Components/`        |
+Naming and rules for each class type live in the `CLAUDE.md` of the directory that holds it. Homes that are not Laravel defaults: `app/Actions/`, `app/Data/` (DTOs), `app/Queries/`, `app/Models/Builders/`, `app/Models/Scopes/`, `app/Concerns/` (traits), `app/Contracts/` (interfaces), `app/Features/` (Pennant), `app/States/`, `app/Services/`, `app/Support/`.
 
 ## Default or fail
 
