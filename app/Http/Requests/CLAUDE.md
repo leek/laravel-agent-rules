@@ -8,11 +8,11 @@
 
 ## Rules
 
-- **MUST** ensure authorization is enforced before the controller runs. Prefer a policy decision in `authorize()` for a Form Request that owns the HTTP boundary. `return true` is appropriate only when equivalent policy authorization is deliberately enforced by route `->can(...)` middleware; document that ownership rather than duplicating the same ability check in the controller.
+- **MUST** follow the one-owner rule in **Security** in `app/CLAUDE.md`. When no Action runs, `authorize()` makes the policy decision unless a route `->can(...)` already does. `return true` is correct when the route `->can(...)` or the Action behind the controller owns the check; add a one-line comment naming that owner instead of repeating the same ability check.
 - **SHOULD** delegate authorization to a Policy (`$this->user()?->can('create', Order::class) ?? false`) rather than inlining logic.
 - **SHOULD** keep validation rules colocated in `rules()`; do not validate ad-hoc in the controller.
 - **MUST** make the rules as strict as the write they guard. Every `NOT NULL` column the request feeds is `required` or given a value before the write, and an `exists` rule applies the same eligibility filter the Action applies. Input that passes validation and then fails a database constraint or an Action guard answers 500 instead of 422. Add a feature test that posts the ineligible value and asserts 422.
-- **MUST** bound every value to the column it lands in: `max:` equal to the `varchar` width, and `numeric` with `min:`/`max:` or `decimal:` that fit the column's precision and scale. When the same input is also written to a second column (a note copied into a `varchar(255)` reason), the narrower column sets the bound. The same bounds apply where no Form Request runs: Livewire `#[Validate]` and Filament form fields (`->maxLength()`, `->maxValue()`).
+- **MUST** bound every value to the column it lands in: `max:` equal to the `varchar` width, and `numeric` with `min:`/`max:` or `decimal:` that fit the column's precision and scale. When the same input is also written to a second column (a note copied into a `varchar(255)` reason), the narrower column sets the bound. A delta's result depends on the stored value, so the Action bounds it (see **Null and numeric edges** in `app/CLAUDE.md`). The same bounds apply where no Form Request runs: Livewire `#[Validate]` and Filament form fields (`->maxLength()`, `->maxValue()`).
 - **SHOULD** expose a `toDto()` method that returns a typed DTO when the action downstream expects structured input — keeps the action free of `$request->input(...)` calls.
 - **MUST** put user-facing validation messages through `__()` / lang files (or Laravel's default translated messages) — see `app/CLAUDE.md`.
 

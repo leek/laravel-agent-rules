@@ -81,7 +81,11 @@ public function __construct(private readonly Mailer $mailer) {}
 
 ## Security (cross-cutting)
 
-- **MUST** authorize before acting — policies / `Gate::authorize()` / route `->can(...)` before mutations or sensitive reads. `$this->authorize()` requires the `AuthorizesRequests` trait. Never trust a client-supplied id alone for ownership or tenancy.
+- **MUST** authorize before acting, through a policy, before mutations or sensitive reads. Each check has one owner:
+  - When an Action performs the operation, the Action owns the check and repeats it on the locked row (see **Lock, re-read, then decide**), so a job, command or listener that calls it is covered too.
+  - The HTTP layer adds **at most one** check for an early 403: route `->can(...)` **or** Form Request `authorize()`, never both. With an Action behind it, that check is optional.
+  - When no Action runs (simple CRUD), that one HTTP check is the owner.
+  - `$this->authorize()` requires the `AuthorizesRequests` trait. Never trust a client-supplied id alone for ownership or tenancy.
 - **MUST** scope lookups to the authenticated boundary (tenant, owner, team) in queries and validation (`exists` / `unique` rules) — global scopes and policies do not automatically protect every query.
 - **MUST NOT** concatenate request input into SQL, shell commands, or raw cache/key fragments. Whitelist sorts, filters, and report dimensions with an enum or explicit map.
 - **MUST** read secrets only via `config(...)` (never `env()` outside `config/*.php`) — see `config/CLAUDE.md`.
@@ -166,6 +170,7 @@ $roomId = array_key_exists('room_id', $data) ? $data['room_id'] : $booking->room
 - **MUST** guard the empty case before `random_int(0, count($items) - 1)` or `array_rand($items)`. Both throw `ValueError` on an empty set.
 - **MUST** compare thresholds and caps on unrounded values and round only for display. When a rounded amount is bounded by a hard cap, round toward the safe side.
 - **MUST** validate the raw parts before a normaliser combines or discards them (sums components, maps an unknown value to null). Format-only normalisation (trim, lowercase) may run first.
+- **MUST** bound the result of a delta write (`increment()`, an adjust endpoint, `quantity + $delta`), not only the delta. Check the new value against the column's range on the locked row, and answer the out-of-range case like any other rejected transition. A validated delta still overflows an `unsignedInteger` when it is applied repeatedly.
 - A regex length bound on user text needs the `/u` modifier. Without it `{1,10}` counts bytes and rejects multibyte text.
 
 ### Tenant-local dates

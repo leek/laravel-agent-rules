@@ -25,6 +25,7 @@ Fresh Laravel 12/13 applications ship `web.php` and `console.php`. Add API routi
 - **SHOULD** prefer resource routes for CRUD: `Route::resource('users', UserController::class)`.
 - **SHOULD** use route-model binding (`/users/{user}`) over manual lookups.
 - **MUST** use `Route::scopeBindings()` (or `->scopeBindings()` on a group) for nested routes — enforces the parent-child relationship. Separately scope and authorize the parent against the authenticated tenant/owner; scoped child binding does not provide tenant authorization.
+- **MUST** put tenant scoping for route-model binding on the model: a tenant global scope (`#[ScopedBy]`, see `app/Models/CLAUDE.md`) or a trait that overrides `resolveRouteBindingQuery()`. Every route that binds the model is then scoped, whatever its placeholder is called. A `Route::bind('reservation', ...)` covers only the `{reservation}` placeholder; a later route that uses `{booking}` for the same model binds across tenants.
 - **MUST** match the route placeholder to the type-hinted argument name (`{conversation}` with `Conversation $conversation`). A mismatch skips implicit binding and can inject a fresh, unpersisted model through the container rather than the requested row; optional arguments may resolve to null.
 - **MUST** constrain free-form route parameters at the route boundary. Prefer typed helpers (`whereNumber()`, `whereUuid()`, `whereAlpha()`, `whereAlphaNumeric()`, `whereIn()`) over regex when they express the rule; invalid values should 404 before the controller runs.
 - `Route::redirect()` and `Route::permanentRedirect()` drop the query string: the destination is built from route parameters only, so campaign and attribution parameters are lost. Where the old URL can arrive with a query, **MUST** forward it: `Route::get('/old', fn (Request $request) => redirect()->route('new', $request->query(), 301));`.
@@ -119,7 +120,7 @@ To resolve `{conversation}` to a class with a different name, register an explic
 Route::model('conversation', AiConversation::class);
 ```
 
-For non-trivial resolution logic, use `Route::bind()` or override `resolveRouteBinding()` on the model.
+For non-trivial resolution logic, override `resolveRouteBindingQuery()` or `resolveRouteBinding()` on the model, so the logic follows the model to every route. `Route::bind()` applies to one placeholder name only; keep it for placeholder-specific resolution, never for tenant or ownership scoping.
 
 ## Task scheduling (`routes/console.php`)
 
