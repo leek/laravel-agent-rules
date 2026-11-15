@@ -194,6 +194,7 @@ Model::shouldBeStrict(! app()->isProduction());
 
 - **MUST** eager-load relations the caller will touch (`with([...])`). Lazy access in a loop is N+1.
 - **SHOULD** use `withCount()` for aggregates rather than counting in a loop.
+- **MUST** make a value built on a `withSum()` / `withCount()` attribute throw a `LogicException` when the attribute was not loaded (`array_key_exists('lines_sum_amount', $this->attributes)`), in every environment. A fallback query per row is the N+1 the aggregate was meant to remove; a fallback zero is a wrong answer. `shouldBeStrict()` catches neither in production.
 
 ```php
 $orders = Order::query()

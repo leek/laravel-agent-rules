@@ -50,6 +50,7 @@ There is no `app/Exceptions/Handler.php` in the modern skeleton. Reporting and r
 })
 ```
 
+- **MUST** answer every API 404 with the same body, whether the record is missing, belongs to another tenant, or a policy denied it with `Response::denyAsNotFound()`. Laravel turns `ModelNotFoundException` into a 404 whose message names the model class (`No query results for model [App\Models\Order]`), and a `denyAsNotFound()` denial reaches the renderer as an `HttpException` with status 404, not a `NotFoundHttpException`. Render both through one renderer, or a client can tell the cases apart.
 - **MUST NOT** expose `$e->getMessage()`, stack traces, or internal identifiers in client-facing responses. Log the technical detail; return a stable error code and a translated user message.
 
 - **MUST** force JSON rendering for API routes with `shouldRenderJsonWhen(...)` so clients still receive JSON when they forget the `Accept: application/json` header.
