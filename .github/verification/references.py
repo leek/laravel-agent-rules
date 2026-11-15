@@ -17,6 +17,9 @@ for rule in rules:
         errors.append(f"{rule.relative_to(root)}: unbalanced code fences")
 
 loader = (root / "CLAUDE.md").read_text()
+guideline = root / ".ai" / "guidelines" / "laravel-agent-rules.md"
+if not guideline.is_file() or guideline.read_text() != loader:
+    errors.append(".ai/guidelines/laravel-agent-rules.md must be identical to the root CLAUDE.md (Laravel Boost projects read it instead)")
 for name in ("CLAUDE.md", "AGENTS.md", "GEMINI.md", ".cursorrules", ".windsurfrules", ".clinerules"):
     if name not in loader:
         errors.append(f"Root loader does not resolve {name}")

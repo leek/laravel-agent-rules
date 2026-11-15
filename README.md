@@ -60,6 +60,8 @@ database/migrations/AGENTS.md
 ...
 ```
 
+**Laravel Boost projects:** Boost writes its own root `CLAUDE.md` (and `AGENTS.md`, `GEMINI.md`), and the installer skips files that already exist, so the root loader would never arrive. The same loader therefore also ships as `.ai/guidelines/laravel-agent-rules.md`, which Boost composes into the `<laravel-boost-guidelines>` block of every agent file it writes. After installing, run `php artisan boost:update` (or `boost:install`) to pick it up. Projects without Boost use the root `CLAUDE.md` directly. CI keeps the two files identical.
+
 Subdirectory rules ship as separate files, not concatenated into the root. The root rule file instructs agents to read the cross-cutting `app/` rules for every project directory, and resolves canonical `CLAUDE.md` references to the selected agent's filename. The installer copies content unchanged; it does not rewrite references.
 
 Claude, Codex, and Gemini support hierarchical context files, subject to their context-loading settings. Do not assume every supported output filename has the same discovery behavior. The installer currently emits legacy `.cursorrules`, `.windsurfrules`, and `.clinerules` files rather than native glob-scoped rules. Verify the root loader is active and explicitly reads the relevant nested files. For automatic scoping, configure native rules using [Cursor project rules](https://docs.cursor.com/context/rules), [Windsurf rules or AGENTS.md](https://docs.windsurf.com/windsurf/cascade/memories), or [Cline conditional rules](https://docs.cline.bot/customization/cline-rules). Merely writing a legacy rule file into each subdirectory does not guarantee it is loaded.
